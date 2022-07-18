@@ -3,27 +3,57 @@ import time
 import os
 import collections
 
-#TEST1
-
 test_sudoku = [[4, 0, 6, 7, 5, 1, 0, 8, 0],
-         [2, 0, 8, 0, 0, 0, 4, 7, 0],
-         [0, 0, 0, 0, 0, 0, 9, 0, 6],
-         [5, 3, 0, 2, 0, 0, 0, 0, 0],
-         [6, 4, 9, 1, 3, 0, 0, 0, 0],
-         [0, 0, 7, 9, 0, 5, 1, 0, 0],
-         [0, 7, 0, 8, 2, 9, 0, 5, 0],
-         [0, 6, 2, 0, 1, 0, 0, 3, 8],
-         [1, 8, 0, 0, 0, 7, 0, 0, 9]]
+               [2, 0, 8, 0, 0, 0, 4, 7, 0],
+               [0, 0, 0, 0, 0, 0, 9, 0, 6],
+               [5, 3, 0, 2, 0, 0, 0, 0, 0],
+               [6, 4, 9, 1, 3, 0, 0, 0, 0],
+               [0, 0, 7, 9, 0, 5, 1, 0, 0],
+               [0, 7, 0, 8, 2, 9, 0, 5, 0],
+               [0, 6, 2, 0, 1, 0, 0, 3, 8],
+               [1, 8, 0, 0, 0, 7, 0, 0, 9]]
 
 hard_sudoku = [[0, 0, 9, 3, 0, 0, 0, 0, 5],
-         [0, 0, 0, 0, 0, 0, 9, 8, 0],
-         [7, 5, 0, 0, 0, 8, 0, 0, 2],
-         [5, 3, 4, 0, 6, 0, 2, 0, 0],
-         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-         [0, 0, 2, 0, 4, 0, 8, 6, 9],
-         [8, 0, 0, 1, 0, 0, 0, 9, 4],
-         [0, 4, 7, 0, 0, 0, 0, 0, 0],
-         [6, 0, 0, 0, 0, 5, 3, 0, 0]]
+               [0, 0, 0, 0, 0, 0, 9, 8, 0],
+               [7, 5, 0, 0, 0, 8, 0, 0, 2],
+               [5, 3, 4, 0, 6, 0, 2, 0, 0],
+               [0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 2, 0, 4, 0, 8, 6, 9],
+               [8, 0, 0, 1, 0, 0, 0, 9, 4],
+               [0, 4, 7, 0, 0, 0, 0, 0, 0],
+               [6, 0, 0, 0, 0, 5, 3, 0, 0]]
+
+subgrids = {
+    1: {(0, 0), (0, 1), (0, 2),
+        (1, 0), (1, 1), (1, 2),
+        (2, 0), (2, 1), (2, 2)},
+    2: {(0, 3), (0, 4), (0, 5),
+        (1, 3), (1, 4), (1, 5),
+        (2, 3), (2, 4), (2, 5)},
+    3: {(0, 6), (0, 7), (0, 8),
+        (1, 6), (1, 7), (1, 8),
+        (2, 6), (2, 7), (2, 8)},
+    4: {(3, 0), (3, 1), (3, 2),
+        (4, 0), (4, 1), (4, 2),
+        (5, 0), (5, 1), (5, 2)},
+    5: {(3, 3), (3, 4), (3, 5),
+        (4, 3), (4, 4), (4, 5),
+        (5, 3), (5, 4), (5, 5)},
+    6: {(3, 6), (3, 7), (3, 8),
+        (4, 6), (4, 7), (4, 8),
+        (5, 6), (5, 7), (5, 8)},
+    7: {(6, 0), (6, 1), (6, 2),
+        (7, 0), (7, 1), (7, 2),
+        (8, 0), (8, 1), (8, 2)},
+    8: {(6, 3), (6, 4), (6, 5),
+        (7, 3), (7, 4), (7, 5),
+        (8, 3), (8, 4), (8, 5)},
+    9: {(6, 6), (6, 7), (6, 8),
+        (7, 6), (7, 7), (7, 8),
+        (8, 6), (8, 7), (8, 8)}
+    }
+
+stack = []
 
 
 def print_sudoku(sudoku):
@@ -55,7 +85,7 @@ def print_sudoku(sudoku):
                         possibles.insert(num - 1, " ")
                 top += color.RED + f" {possibles[0]} {possibles[1]} {possibles[2]} " + color.END + "|"
                 middle += color.RED + f" {possibles[3]} {possibles[4]} {possibles[5]} " + color.END + "|"
-                bottom += color.RED + f" {possibles[6]} {possibles[7]} {possibles[8]} "+ color.END + "|"
+                bottom += color.RED + f" {possibles[6]} {possibles[7]} {possibles[8]} " + color.END + "|"
 
             else:
                 top += "       |"
@@ -80,53 +110,19 @@ def create_2d_sudoku_array(unfinished_sudoku):
     return empty_sudoku
 
 
-def create_subgrids():
-    subgrids = {
-        1: {(0, 0), (0, 1), (0, 2),
-            (1, 0), (1, 1), (1, 2),
-            (2, 0), (2, 1), (2, 2)},
-        2: {(0, 3), (0, 4), (0, 5),
-            (1, 3), (1, 4), (1, 5),
-            (2, 3), (2, 4), (2, 5)},
-        3: {(0, 6), (0, 7), (0, 8),
-            (1, 6), (1, 7), (1, 8),
-            (2, 6), (2, 7), (2, 8)},
-        4: {(3, 0), (3, 1), (3, 2),
-            (4, 0), (4, 1), (4, 2),
-            (5, 0), (5, 1), (5, 2)},
-        5: {(3, 3), (3, 4), (3, 5),
-            (4, 3), (4, 4), (4, 5),
-            (5, 3), (5, 4), (5, 5)},
-        6: {(3, 6), (3, 7), (3, 8),
-            (4, 6), (4, 7), (4, 8),
-            (5, 6), (5, 7), (5, 8)},
-        7: {(6, 0), (6, 1), (6, 2),
-            (7, 0), (7, 1), (7, 2),
-            (8, 0), (8, 1), (8, 2)},
-        8: {(6, 3), (6, 4), (6, 5),
-            (7, 3), (7, 4), (7, 5),
-            (8, 3), (8, 4), (8, 5)},
-        9: {(6, 6), (6, 7), (6, 8),
-            (7, 6), (7, 7), (7, 8),
-            (8, 6), (8, 7), (8, 8)}
-    }
-    return subgrids
-
-
 def solving_loop(sudoku):
-    stack = initiate_stack(sudoku)
-    subgrids = create_subgrids()
-    #while len(stack) > 0:
+    initiate_stack(sudoku)
+    # while len(stack) > 0:
     while True:
         if len(stack) > 0:
             top = stack.pop()
             print(f"pulled {top} from stack")
-            collapse(sudoku, subgrids, row=top["row"], column=top["column"], number=top["number"])
-            set_single_clue(stack, sudoku)
+            collapse(sudoku, row=top["row"], column=top["column"], number=top["number"])
+            set_single_clue(sudoku)
         else:
-            set_last_possible(stack, sudoku, subgrids)
+            set_last_possible(sudoku)
 
-        #PROBLEME
+        # PROBLEME
         print_sudoku(sudoku)
         time.sleep(0.5)
         print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
@@ -136,12 +132,12 @@ def solving_loop(sudoku):
                 break
 
 
-#TODO higher order functions
-def collapse(sudoku, subgrids, row, column, number):
+# TODO higher order functions
+def collapse(sudoku, row, column, number):
     print(f"collapsing {number} in row {row} column {column}")
     collapse_horizontal(sudoku, row, number)
     collapse_vertical(sudoku, column, number)
-    collapse_local(sudoku, subgrids, row, column, number)
+    collapse_local(sudoku, row, column, number)
 
 
 def collapse_horizontal(sudoku, row, number):
@@ -162,7 +158,7 @@ def collapse_vertical(sudoku, column, number):
                 sudoku[x][column].remove(number)
 
 
-def collapse_local(sudoku, subgrids, row, column, number):
+def collapse_local(sudoku, row, column, number):
     print(f"collapsing local {number} in row {row} column {column}")
     for quadrants in subgrids:
         if (row, column) in subgrids[quadrants]:
@@ -175,26 +171,27 @@ def collapse_local(sudoku, subgrids, row, column, number):
                         sudoku[x][y].remove(number)
 
 
-def set_digit(stack, sudoku, row, column, number):
-    #time.sleep(0.5)
+def set_digit(sudoku, row, column, number):
+    # time.sleep(0.5)
     sudoku[row][column] = number
-    stack_append(stack, row, column, number)
+    stack_append(row, column, number)
     print(f"set {number} in row {row} column {column}")
 
-#TODO higher order functions
-def set_last_possible(stack, sudoku, subgrids):
-    if set_last_possible_horizontal(stack, sudoku):
+
+# TODO higher order functions
+def set_last_possible(sudoku):
+    if set_last_possible_horizontal(sudoku):
         return True
-    elif set_last_possible_vertical(stack, sudoku):
+    elif set_last_possible_vertical(sudoku):
         return True
-    elif set_last_possible_local(stack, sudoku, subgrids):
+    elif set_last_possible_local(sudoku):
         return True
     else:
         return False
 
 
-def set_last_possible_horizontal(stack, sudoku):
-    #horizontal
+def set_last_possible_horizontal(sudoku):
+    # horizontal
     counter_hor = collections.Counter()
     for i in range(9):
         for j in range(9):
@@ -209,12 +206,12 @@ def set_last_possible_horizontal(stack, sudoku):
             for j in range(9):
                 if isinstance(sudoku[i][j], list) and digit in sudoku[i][j]:
                     print(f"last_possible_horizontal giving {digit} row {i} colum {j} to set_digit")
-                    set_digit(stack, sudoku, row=i, column=j, number=digit)
+                    set_digit(sudoku, row=i, column=j, number=digit)
                     return True
 
 
-def set_last_possible_vertical(stack, sudoku):
-    #vertical
+def set_last_possible_vertical(sudoku):
+    # vertical
     counter_ver = collections.Counter()
     for i in range(9):
         for j in range(9):
@@ -228,11 +225,11 @@ def set_last_possible_vertical(stack, sudoku):
             for j in range(9):
                 if isinstance(sudoku[j][i], list) and digit in sudoku[j][i]:
                     print(f"last_possible_vertical giving {digit} row {j} colum {i} to set_digit")
-                    set_digit(stack, sudoku, row=j, column=i, number=digit)
+                    set_digit(sudoku, row=j, column=i, number=digit)
                     return True
 
 
-def set_last_possible_local(stack, sudoku, subgrids):
+def set_last_possible_local(sudoku):
     counter_local = collections.Counter()
     for quadrants in subgrids:
         for index in subgrids[quadrants]:
@@ -250,50 +247,49 @@ def set_last_possible_local(stack, sudoku, subgrids):
                 y = index[1]
                 if isinstance(sudoku[x][y], list) and digit in sudoku[x][y]:
                     print(f"last_possible_local giving {digit} row {x} column {y} to set_digit")
-                    set_digit(stack, sudoku, row=x, column=y, number=digit)
+                    set_digit(sudoku, row=x, column=y, number=digit)
                     return True
 
 
-def set_single_clue(stack, sudoku):
+def set_single_clue(sudoku):
     for i in range(9):
         for j in range(9):
             if isinstance(sudoku[i][j], list):
                 if len(sudoku[i][j]) == 1:
                     num = sudoku[i][j].pop()
                     print(f"giving single clue {num} row {i} column {j} to set_digit")
-                    set_digit(stack, sudoku, row=i, column=j, number=num)
+                    set_digit(sudoku, row=i, column=j, number=num)
                     return True
 
-#lamda?
+
+# lamda?
 def initiate_stack(sudoku):
-    stack = []
     for i in range(9):
         for j in range(9):
             if isinstance(sudoku[i][j], list):
                 pass
             else:
-                stack_append(stack, row=i, column=j, number=sudoku[i][j])
-    return stack
+                stack_append(row=i, column=j, number=sudoku[i][j])
 
 
-def stack_append(stack, row, column, number):
+def stack_append(row, column, number):
     stack.append({
-                    "row": row,
-                    "column": column,
-                    "number": number
-                    })
+        "row": row,
+        "column": column,
+        "number": number
+    })
     print(f"appended {number} in row {row} column {column} to stack")
 
 
 def sudoku_solved(sudoku):
     print("check?")
-    #Listcomprehension 2d array
-   # [[all_possibilities.copy() for i in range(column)] for j in range(row)]
-    #print([[for i in range(9)] isinstance(item, int) for item in sudoku[i]])
+    # Listcomprehension 2d array
+    # [[all_possibilities.copy() for i in range(column)] for j in range(row)]
+    # print([[for i in range(9)] isinstance(item, int) for item in sudoku[i]])
     return all([isinstance(item, int) for item in sudoku])
 
 
 def solve():
     solvable = create_2d_sudoku_array(hard_sudoku)
-    #solvable = create_2d_sudoku_array(test_sudoku)
+    # solvable = create_2d_sudoku_array(test_sudoku)
     solving_loop(solvable)
