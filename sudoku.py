@@ -3,7 +3,7 @@ import time
 import os
 import collections
 
-#TEST
+#TEST1
 
 test_sudoku = [[4, 0, 6, 7, 5, 1, 0, 8, 0],
          [2, 0, 8, 0, 0, 0, 4, 7, 0],
