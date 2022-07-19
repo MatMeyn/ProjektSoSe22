@@ -102,8 +102,8 @@ def create_2d_sudoku_array(unfinished_sudoku):
     all_possibilities = [1, 2, 3, 4, 5, 6, 7, 8, 9]
     empty_sudoku = [[all_possibilities.copy() for i in range(column)] for j in range(row)]
 
-    for i in range(9):
-        for j in range(9):
+    for i in range(row):
+        for j in range(column):
             if unfinished_sudoku[i][j] > 0:
                 empty_sudoku[i][j] = unfinished_sudoku[i][j]
 
