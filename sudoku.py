@@ -1,7 +1,11 @@
-import numpy as np
 import time
-import os
 import collections
+
+
+#TODO: Klassenstruktur, Sudokuklasse, bekommt ungelöstes Grid, jeder aufruf von solvingloop() soll einen schritt weiter zurückgeben
+#functions: number of solved für checks, number of unsolved,
+#mehr iterative lösungsfunktionen siehe https://www.sudokuwiki.org/Intersection_Removal
+
 
 test_sudoku = [[4, 0, 6, 7, 5, 1, 0, 8, 0],
                [2, 0, 8, 0, 0, 0, 4, 7, 0],
