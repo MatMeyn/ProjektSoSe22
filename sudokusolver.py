@@ -113,14 +113,8 @@ class SudokuSolver:
                     solved += 1
         return solved == 81
 
-    # TODO higher order functions
     def collapse(self, row, column, number):
         print(f"collapsing {number} in row {row} column {column}")
-        self.collapse_horizontal(row, number)
-        self.collapse_vertical(column, number)
-        self.collapse_local(row, column, number)
-
-    def collapse_horizontal(self, row, number):
         print(f"collapsing horizontal {number} in row {row}")
         for x in self.sudoku[row]:
             if isinstance(x, list):
@@ -128,7 +122,6 @@ class SudokuSolver:
                     print(f"set an dieser stelle{x}")
                     x.remove(number)
 
-    def collapse_vertical(self, column, number):
         print(f"collapsing vertical {number} in column {column}")
         for x in range(9):
             if isinstance(self.sudoku[x][column], list):
@@ -136,7 +129,6 @@ class SudokuSolver:
                     print(f"set an dieser stelle{self.sudoku[x][column]}")
                     self.sudoku[x][column].remove(number)
 
-    def collapse_local(self, row, column, number):
         print(f"collapsing local {number} in row {row} column {column}")
         for quadrants in self.subgrid:
             if (row, column) in self.subgrid[quadrants]:
@@ -147,13 +139,15 @@ class SudokuSolver:
                         if number in self.sudoku[x][y]:
                             print(f"set an dieser stelle{self.sudoku[x][y]}")
                             self.sudoku[x][y].remove(number)
-    #problem mit .pop()
+
     def set_single_clue(self):
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], list):
                     if len(self.sudoku[i][j]) == 1:
-                        num = self.sudoku[i][j].pop()
+                        #umwandlung von list zu int einfacher möglich?
+                        temp = self.sudoku[i][j].copy()
+                        num = temp.pop()
                         print(f"giving single clue {num} row {i} column {j} to stack")
                         self.stack_append(row=i, column=j, number=num)
 
@@ -208,5 +202,6 @@ for _ in range(500):
     abc.solve_next()
     abc.print_sudoku()
     abc.get_stack()
+    abc.get_main_sudoku()
     if abc.is_solved():
         break
