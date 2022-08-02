@@ -60,13 +60,31 @@ class SudokuSolver:
         self.sudoku = self.create_2d(unfinished_sudoku)
         self.initiate_stack()
 
-    def create_2d(self, unfinished_sudoku):
+    # helper functions
+    def create_2d(self, unfinished_sudoku) -> list:
         empty_sudoku = [[self.all_possibilities.copy() for _ in range(9)] for _ in range(9)]
         for i in range(9):
             for j in range(9):
                 if unfinished_sudoku[i][j] > 0:
                     empty_sudoku[i][j] = unfinished_sudoku[i][j]
         return empty_sudoku
+
+    def is_solved(self) -> bool:
+        solved = 0
+        for i in range(9):
+            for j in range(9):
+                if isinstance(self.sudoku[i][j], int):
+                    solved += 1
+        return solved == 81
+
+    def count_clues_in_box(self, quadrant) -> collections.Counter:
+        counter_local = collections.Counter()
+        for index in subgrids[quadrant]:
+            x = index[0]
+            y = index[1]
+            if isinstance(self.sudoku[x][y], list):
+                counter_local.update(collections.Counter(self.sudoku[x][y]))
+        return counter_local
 
     # lamda?
     def initiate_stack(self):
@@ -78,11 +96,14 @@ class SudokuSolver:
                     self.stack_append(row=i, column=j, number=self.sudoku[i][j])
 
     def stack_append(self, row, column, number):
-        self.stack.append({
-            "row": row,
-            "column": column,
-            "number": number
-        })
+        if not any((d["row"] == row and d["column"] == column and d["number"] == number) for d in self.stack):
+            self.stack.append({
+                "row": row,
+                "column": column,
+                "number": number
+            })
+        else:
+            print(f'attempted to put row {row} column {column} number {number} on stack, is it already there?')
         print(f"appended {number} in row {row} column {column} to stack")
 
     def set_digit(self):
@@ -96,23 +117,78 @@ class SudokuSolver:
         if isinstance(self.sudoku[row][column], list):
             self.sudoku[row][column] = number
 
-    def solve_next(self):
+    def solve_next(self) -> list:
         if len(self.stack) > 0:
             self.set_digit()
             return self.sudoku
         else:
+            #self.pointing()
+            #self.box_line()
             self.set_single_clue()
-            #self.set_last_possible()
+            self.set_last_possible()
 
-
-    def is_solved(self):
-        solved = 0
+    def set_single_clue(self):
         for i in range(9):
             for j in range(9):
-                if isinstance(self.sudoku[i][j], int):
-                    solved += 1
-        return solved == 81
+                if isinstance(self.sudoku[i][j], list):
+                    if len(self.sudoku[i][j]) == 1:
+                        # umwandlung von list zu int einfacher möglich?
+                        temp = self.sudoku[i][j].copy()
+                        num = temp.pop()
+                        print(f"giving single clue {num} row {i} column {j} to stack")
+                        self.stack_append(row=i, column=j, number=num)
 
+    # Solving-functions
+    def set_last_possible(self):
+        # horizontal
+        counter_hor = collections.Counter()
+        for i in range(9):
+            for j in range(9):
+                if isinstance(self.sudoku[i][j], list):
+                    counter_temp = collections.Counter(self.sudoku[i][j])
+                    counter_hor += counter_temp
+            digits = [k for k, v in counter_hor.items() if v == 1]
+            print(f"digits {digits}")
+            print(f"counter_horizontal {counter_hor}")
+            counter_hor.clear()
+            for digit in digits:
+                for j in range(9):
+                    if isinstance(self.sudoku[i][j], list) and digit in self.sudoku[i][j]:
+                        print(f"last_possible_horizontal giving {digit} row {i} colum {j} to set_digit")
+                        self.stack_append(row=i, column=j, number=digit)
+
+        # vertical
+        counter_ver = collections.Counter()
+        for i in range(9):
+            for j in range(9):
+                if isinstance(self.sudoku[j][i], list):
+                    counter_ver.update(collections.Counter(self.sudoku[j][i]))
+            digits = [k for k, v in counter_ver.items() if v == 1]
+            print(f"digits {digits}")
+            print(f"counter_vertical {counter_ver}")
+            counter_ver.clear()
+            for digit in digits:
+                for j in range(9):
+                    if isinstance(self.sudoku[j][i], list) and digit in self.sudoku[j][i]:
+                        print(f"last_possible_vertical giving {digit} row {j} colum {i} to set_digit")
+                        self.stack_append(row=j, column=i, number=digit)
+
+        for quadrant in self.subgrid:
+            counter_local = self.count_clues_in_box(quadrant)
+            digits = [k for k, v in counter_local.items() if v == 1]
+            print(f"digits {digits}")
+            print(f"counter_local {counter_local}")
+            counter_local.clear()
+            for digit in digits:
+                for index in subgrids[quadrant]:
+                    x = index[0]
+                    y = index[1]
+                    if isinstance(self.sudoku[x][y], list) and digit in self.sudoku[x][y]:
+                        print(f"last_possible_local giving {digit} row {x} column {y} to set_digit")
+                        self.stack_append(row=x, column=y, number=digit)
+
+    # Reductive functions
+    # collapsing clues after setting of new number
     def collapse(self, row, column, number):
         print(f"collapsing {number} in row {row} column {column}")
         print(f"collapsing horizontal {number} in row {row}")
@@ -140,18 +216,23 @@ class SudokuSolver:
                             print(f"set an dieser stelle{self.sudoku[x][y]}")
                             self.sudoku[x][y].remove(number)
 
-    def set_single_clue(self):
-        for i in range(9):
-            for j in range(9):
-                if isinstance(self.sudoku[i][j], list):
-                    if len(self.sudoku[i][j]) == 1:
-                        #umwandlung von list zu int einfacher möglich?
-                        temp = self.sudoku[i][j].copy()
-                        num = temp.pop()
-                        print(f"giving single clue {num} row {i} column {j} to stack")
-                        self.stack_append(row=i, column=j, number=num)
+    # pointing pairs and triples
+    def pointing(self):
+        # horizontal
+        for quadrant in self.subgrid:
+            counter = self.count_clues_in_box(quadrant)
+            digits = [k for k, v in counter.items() if (v == 2 or v == 3)]
 
-    #testfunctions
+            print(f"subgrid {quadrant} counts {counter}")
+            print(f"digits only there 2 or 3 times: {digits}")
+            counter.clear()
+        pass
+
+    # box-line reduction
+    def box_line(self):
+        pass
+
+    # test-functions
     def get_main_sudoku(self):
         print(self.sudoku)
 
@@ -197,11 +278,13 @@ class SudokuSolver:
             print(bottom)
 
 
-abc = SudokuSolver(test_sudoku)
-for _ in range(500):
+abc = SudokuSolver(hard_sudoku)
+for count in range(300):
     abc.solve_next()
     abc.print_sudoku()
     abc.get_stack()
     abc.get_main_sudoku()
+    print(f'Iterations: {count}')
     if abc.is_solved():
         break
+abc.pointing()
