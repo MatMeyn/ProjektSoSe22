@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from sudoku import solve
 
 
 class MainApplication(tk.Frame):

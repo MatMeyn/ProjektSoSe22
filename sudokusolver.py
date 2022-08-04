@@ -122,8 +122,8 @@ class SudokuSolver:
             self.set_digit()
             return self.sudoku
         else:
-            #self.pointing()
-            #self.box_line()
+            # self.pointing()
+            # self.box_line()
             self.set_single_clue()
             self.set_last_possible()
 
@@ -188,7 +188,7 @@ class SudokuSolver:
                         self.stack_append(row=x, column=y, number=digit)
 
     # Reductive functions
-    # collapsing clues after setting of new number
+    # collapsing clues after setting of new number ??maybe put into setfunction??
     def collapse(self, row, column, number):
         print(f"collapsing {number} in row {row} column {column}")
         print(f"collapsing horizontal {number} in row {row}")
@@ -218,13 +218,15 @@ class SudokuSolver:
 
     # pointing pairs and triples
     def pointing(self):
-        # horizontal
         for quadrant in self.subgrid:
+            row_indices = set([row for row, column in self.subgrid[quadrant]])
+            column_indices = set([column for row, column in self.subgrid[quadrant]])
             counter = self.count_clues_in_box(quadrant)
-            digits = [k for k, v in counter.items() if (v == 2 or v == 3)]
+            digits = [k for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 oder 3 mal vorhanden
 
             print(f"subgrid {quadrant} counts {counter}")
             print(f"digits only there 2 or 3 times: {digits}")
+            print(f"in this quadrant are rows -> {row_indices} columns -> {column_indices}")
             counter.clear()
         pass
 
@@ -278,6 +280,7 @@ class SudokuSolver:
             print(bottom)
 
 
+start = time.perf_counter()
 abc = SudokuSolver(hard_sudoku)
 for count in range(300):
     abc.solve_next()
@@ -288,3 +291,5 @@ for count in range(300):
     if abc.is_solved():
         break
 abc.pointing()
+end = time.perf_counter()
+print(f"Total Time used is {end - start:0.2f}s")
