@@ -188,41 +188,37 @@ class SudokuSolver:
                         self.stack_append(row=x, column=y, number=digit)
 
     # Reductive functions
+    def remove_clue(self, row, column, number):
+        if isinstance(self.sudoku[row][column], list):
+            if number in self.sudoku[row][column]:
+                self.sudoku[row][column].remove(number)
+
     # collapsing clues after setting of new number ??maybe put into setfunction??
     def collapse(self, row, column, number):
         print(f"collapsing {number} in row {row} column {column}")
-        print(f"collapsing horizontal {number} in row {row}")
-        for x in self.sudoku[row]:
-            if isinstance(x, list):
-                if number in x:
-                    print(f"set an dieser stelle{x}")
-                    x.remove(number)
-
-        print(f"collapsing vertical {number} in column {column}")
+        # collapsing horizontal and vertical
         for x in range(9):
-            if isinstance(self.sudoku[x][column], list):
-                if number in self.sudoku[x][column]:
-                    print(f"set an dieser stelle{self.sudoku[x][column]}")
-                    self.sudoku[x][column].remove(number)
+            self.remove_clue(row=x, column=column, number=number)
+            self.remove_clue(row=row, column=x, number=number)
 
-        print(f"collapsing local {number} in row {row} column {column}")
+        # collapsing local
         for quadrants in self.subgrid:
             if (row, column) in self.subgrid[quadrants]:
                 for index in self.subgrid[quadrants]:
                     x = index[0]
                     y = index[1]
-                    if isinstance(self.sudoku[x][y], list):
-                        if number in self.sudoku[x][y]:
-                            print(f"set an dieser stelle{self.sudoku[x][y]}")
-                            self.sudoku[x][y].remove(number)
+                    self.remove_clue(row=x, column=y, number=number)
 
     # pointing pairs and triples
     def pointing(self):
         for quadrant in self.subgrid:
-            row_indices = set([row for row, column in self.subgrid[quadrant]])
+            row_indices = set([row for row, column in self.subgrid[quadrant]])  # all poss. r/c in curr. box
             column_indices = set([column for row, column in self.subgrid[quadrant]])
             counter = self.count_clues_in_box(quadrant)
             digits = [k for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 oder 3 mal vorhanden
+            # example digits 2: 3, 7: 3, 1: 2
+            # alle num in gleicher column? -> in dieser column alle num löschen außer in row_indices
+            # alle num in gleicher row? -> in dieser row alle num löschen außer in column_indices
 
             print(f"subgrid {quadrant} counts {counter}")
             print(f"digits only there 2 or 3 times: {digits}")
@@ -282,11 +278,18 @@ class SudokuSolver:
 
 start = time.perf_counter()
 abc = SudokuSolver(hard_sudoku)
-for count in range(300):
+for count in range(150):
     abc.solve_next()
     abc.print_sudoku()
     abc.get_stack()
     abc.get_main_sudoku()
+    #if count == 1:
+     #   abc.remove_clue(4, 6, 1)
+      #  abc.remove_clue(4, 7, 1)
+       # abc.remove_clue(4, 8, 1)
+        #abc.remove_clue(4, 6, 7)
+        #abc.remove_clue(4, 7, 7)
+        #abc.remove_clue(4, 8, 7)
     print(f'Iterations: {count}')
     if abc.is_solved():
         break
