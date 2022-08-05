@@ -21,6 +21,16 @@ hard_sudoku = [[0, 0, 9, 3, 0, 0, 0, 0, 5],
                [0, 4, 7, 0, 0, 0, 0, 0, 0],
                [6, 0, 0, 0, 0, 5, 3, 0, 0]]
 
+hardest_sudoku = [[1, 0, 0, 0, 0, 7, 0, 9, 0],
+               [0, 3, 0, 0, 2, 0, 0, 0, 8],
+               [0, 0, 9, 6, 0, 0, 5, 0, 0],
+               [0, 0, 5, 3, 0, 0, 9, 0, 0],
+               [0, 1, 0, 0, 8, 0, 0, 0, 2],
+               [6, 0, 0, 0, 0, 4, 0, 0, 0],
+               [3, 0, 0, 0, 0, 0, 0, 1, 0],
+               [0, 4, 0, 0, 0, 0, 0, 0, 7],
+               [0, 0, 7, 0, 0, 0, 3, 0, 0]]
+
 subgrids = {1: {(0, 0), (0, 1), (0, 2),
                 (1, 0), (1, 1), (1, 2),
                 (2, 0), (2, 1), (2, 2)},
@@ -55,6 +65,8 @@ class SudokuSolver:
         self.stack = []
         self.subgrid = subgrids
         self.all_possibilities = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        self.rows = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        self.columns = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.sudoku = self.create_2d(unfinished_sudoku)
         self.initiate_stack()
 
@@ -117,7 +129,7 @@ class SudokuSolver:
             self.set_digit()
             return self.sudoku
         else:
-            # self.pointing()
+            self.pointing()
             # self.box_line()
             self.set_single_clue()
             self.set_last_possible()
@@ -206,18 +218,38 @@ class SudokuSolver:
 
     # pointing pairs and triples
     def pointing(self):
-        for quadrant in self.subgrid:
-            row_indices = set([row for row, column in self.subgrid[quadrant]])  # all poss. r/c in curr. box
-            column_indices = set([column for row, column in self.subgrid[quadrant]])
-            counter = self.count_clues_in_box(quadrant)
-            digits = [k for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 oder 3 mal vorhanden
-            # example digits 2: 3, 7: 3, 1: 2
-            # alle num in gleicher column? -> in dieser column alle num löschen außer in row_indices
-            # alle num in gleicher row? -> in dieser row alle num löschen außer in column_indices
-
-            print(f"subgrid {quadrant} counts {counter}")
+        for box in self.subgrid:
+            box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c in curr. box
+            box_columns = set([column for row, column in self.subgrid[box]])
+            other_rows = [item for item in self.rows if item not in box_rows]  # all other r/c outside box
+            other_columns = [item for item in self.columns if item not in box_columns]
+            counter = self.count_clues_in_box(box)
+            digits = [(k, v) for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 oder 3 mal vorhanden
+            # rows
+            for row in box_rows:
+                counter = collections.Counter()
+                for column in box_columns:
+                    if isinstance(self.sudoku[row][column], list):
+                        counter.update(collections.Counter(self.sudoku[row][column]))
+                for k in digits:
+                    if k in counter.items():
+                        for i in other_columns:
+                            self.remove_clue(row=row, column=i, number=k[0])
+                counter.clear()
+            # columns
+            for column in box_columns:
+                counter = collections.Counter()
+                for row in box_rows:
+                    if isinstance(self.sudoku[row][column], list):
+                        counter.update(collections.Counter(self.sudoku[row][column]))
+                for k in digits:
+                    if k in counter.items():
+                        for i in other_rows:
+                            self.remove_clue(row=i, column=column, number=k[0])
+                counter.clear()
+            print(f"subgrid {box} counts {counter}")
             print(f"digits only there 2 or 3 times: {digits}")
-            print(f"in this quadrant are rows -> {row_indices} columns -> {column_indices}")
+            print(f"in this quadrant are rows -> {box_rows} columns -> {box_columns}")
             counter.clear()
         pass
 
@@ -272,8 +304,8 @@ class SudokuSolver:
 
 
 start = time.perf_counter()
-abc = SudokuSolver(hard_sudoku)
-for count in range(150):
+abc = SudokuSolver(test_sudoku)
+for count in range(300):
     abc.solve_next()
     abc.print_sudoku()
     abc.get_stack()
@@ -288,6 +320,5 @@ for count in range(150):
     print(f'Iterations: {count}')
     if abc.is_solved():
         break
-abc.pointing()
 end = time.perf_counter()
 print(f"Total Time used is {end - start:0.2f}s")
