@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import time
+import sudokusolver
 
 
 class MainApplication(tk.Frame):
@@ -19,10 +21,11 @@ class MainApplication(tk.Frame):
         self.after(20, self.task)
 
 def main():
+    input_from_tkinter = []
+    sudoku = sudokusolver.SudokuSolver(input_from_tkinter)
     root = tk.Tk()
     MainApplication(root)
     root.mainloop()
-    #solve()
 
 
 if __name__ == '__main__':

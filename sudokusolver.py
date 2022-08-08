@@ -259,10 +259,10 @@ class SudokuSolver:
 
     # test-functions
     def get_main_sudoku(self):
-        print(self.sudoku)
+        return self.sudoku
 
     def get_stack(self):
-        print(self.stack)
+        return self.stack
 
     def print_sudoku(self):
         row_count = 0
@@ -310,13 +310,13 @@ for count in range(300):
     abc.print_sudoku()
     abc.get_stack()
     abc.get_main_sudoku()
-    #if count == 1:
-        #abc.remove_clue(4, 6, 1)
-        #abc.remove_clue(4, 7, 1)
-        #abc.remove_clue(4, 8, 1)
-        #abc.remove_clue(4, 6, 7)
-        #abc.remove_clue(4, 7, 7)
-        #abc.remove_clue(4, 8, 7)
+    # if count == 1:
+        # abc.remove_clue(4, 6, 1)
+        # abc.remove_clue(4, 7, 1)
+        # abc.remove_clue(4, 8, 1)
+        # abc.remove_clue(4, 6, 7)
+        # abc.remove_clue(4, 7, 7)
+        # abc.remove_clue(4, 8, 7)
     print(f'Iterations: {count}')
     if abc.is_solved():
         break
