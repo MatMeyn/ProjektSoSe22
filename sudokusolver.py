@@ -72,6 +72,12 @@ class SudokuSolver:
 
     # helper functions
     def create_2d(self, unfinished_sudoku) -> list:
+        """
+        Puts a list of all possibilities where a tile is unsolved
+
+        :param unfinished_sudoku:
+        :return: Sudoku Template used by this class
+        """
         empty_sudoku = [[self.all_possibilities.copy() for _ in range(9)] for _ in range(9)]
         for i in range(9):
             for j in range(9):
@@ -80,6 +86,9 @@ class SudokuSolver:
         return empty_sudoku
 
     def is_solved(self) -> bool:
+        """
+        Check if every tile is solved
+        """
         solved = 0
         for i in range(9):
             for j in range(9):
@@ -87,9 +96,15 @@ class SudokuSolver:
                     solved += 1
         return solved == 81
 
-    def count_clues_in_box(self, quadrant) -> collections.Counter:
+    def count_clues_in_box(self, box) -> collections.Counter:
+        """
+        Helper function for every function that needs to know the count of a clue in a box.
+
+        :param box: Index of Sudoku box between 1-9
+        :return: Counter-Object containing counts of every clue
+        """
         counter_local = collections.Counter()
-        for index in subgrids[quadrant]:
+        for index in subgrids[box]:
             x = index[0]
             y = index[1]
             if isinstance(self.sudoku[x][y], list):
@@ -98,6 +113,9 @@ class SudokuSolver:
 
     # lamda?
     def initiate_stack(self):
+        """
+        Initiates the stack with every already solved tile.
+        """
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], list):
@@ -106,6 +124,13 @@ class SudokuSolver:
                     self.stack_append(row=i, column=j, number=self.sudoku[i][j])
 
     def stack_append(self, row, column, number):
+        """
+        Appends a solved tile to the stack, if not already present.
+
+        :param row: row-index of solved tile
+        :param column: column-index of solved tile
+        :param number: number of solved tile
+        """
         if not any((d["row"] == row and d["column"] == column and d["number"] == number) for d in self.stack):
             self.stack.append({
                 "row": row,
@@ -114,6 +139,10 @@ class SudokuSolver:
             })
 
     def set_digit(self):
+        """
+        Takes a solved tile from the stack to collapse every clue it influences,
+        and set it in the Sudoku-Grid if not already present.
+        """
         top = self.stack.pop()
         row = top["row"]
         column = top["column"]
@@ -125,16 +154,28 @@ class SudokuSolver:
             self.sudoku[row][column] = number
 
     def solve_next(self) -> list:
+        """
+        TODO: Expand explanation
+        This is the main solving function, used by the GUI.
+        If the stack is not empty it collapses clues for the next solved tile,
+        else it tries other solving functions.
+
+        :return: next Iteration of Sudoku-Grid
+        """
         if len(self.stack) > 0:
             self.set_digit()
-            return self.sudoku
         else:
             self.pointing()
             # self.box_line()
             self.set_single_clue()
             self.set_last_possible()
 
+        return self.sudoku
+
     def set_single_clue(self):
+        """
+        Solves a tile if there is only a single clue left
+        """
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], list):
@@ -147,7 +188,10 @@ class SudokuSolver:
 
     # Solving-functions
     def set_last_possible(self):
-        # horizontal
+        """
+        Solves a tile if it contains the last possible number in a row, column or box
+        """
+        # row
         counter_hor = collections.Counter()
         for i in range(9):
             for j in range(9):
@@ -164,7 +208,7 @@ class SudokuSolver:
                         print(f"last_possible_horizontal giving {digit} row {i} colum {j} to set_digit")
                         self.stack_append(row=i, column=j, number=digit)
 
-        # vertical
+        # column
         counter_ver = collections.Counter()
         for i in range(9):
             for j in range(9):
@@ -180,14 +224,15 @@ class SudokuSolver:
                         print(f"last_possible_vertical giving {digit} row {j} colum {i} to set_digit")
                         self.stack_append(row=j, column=i, number=digit)
 
-        for quadrant in self.subgrid:
-            counter_local = self.count_clues_in_box(quadrant)
+        # box
+        for box in self.subgrid:
+            counter_local = self.count_clues_in_box(box)
             digits = [k for k, v in counter_local.items() if v == 1]
             print(f"digits {digits}")
             print(f"counter_local {counter_local}")
             counter_local.clear()
             for digit in digits:
-                for index in subgrids[quadrant]:
+                for index in subgrids[box]:
                     x = index[0]
                     y = index[1]
                     if isinstance(self.sudoku[x][y], list) and digit in self.sudoku[x][y]:
@@ -196,19 +241,32 @@ class SudokuSolver:
 
     # Reductive functions
     def remove_clue(self, row, column, number):
+        """
+        Helper function to remove a single clue from a single tile
+
+        :param row: row-index
+        :param column: column-index
+        :param number: Number of clue to remove
+        """
         if isinstance(self.sudoku[row][column], list):
             if number in self.sudoku[row][column]:
                 self.sudoku[row][column].remove(number)
 
-    # collapsing clues after setting of new number ??maybe put into setfunction??
+    # collapsing clues after setting of new number
     def collapse(self, row, column, number):
+        """
+        Collapses the clues of a given number in the row, column and box of the given solved tile
+        :param row: row-index of solved tile
+        :param column: column-index of solved tile
+        :param number: number of solved tile
+        """
         print(f"collapsing {number} in row {row} column {column}")
-        # collapsing horizontal and vertical
+        # collapsing row and column
         for x in range(9):
             self.remove_clue(row=x, column=column, number=number)
             self.remove_clue(row=row, column=x, number=number)
 
-        # collapsing local
+        # collapsing box
         for quadrants in self.subgrid:
             if (row, column) in self.subgrid[quadrants]:
                 for index in self.subgrid[quadrants]:
@@ -218,6 +276,9 @@ class SudokuSolver:
 
     # pointing pairs and triples
     def pointing(self):
+        """
+        Solving strategy pointing pairs and pointing triples
+        """
         for box in self.subgrid:
             box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c in curr. box
             box_columns = set([column for row, column in self.subgrid[box]])
@@ -251,7 +312,6 @@ class SudokuSolver:
             print(f"digits only there 2 or 3 times: {digits}")
             print(f"in this quadrant are rows -> {box_rows} columns -> {box_columns}")
             counter.clear()
-        pass
 
     # box-line reduction
     def box_line(self):
@@ -259,12 +319,22 @@ class SudokuSolver:
 
     # test-functions
     def get_main_sudoku(self):
+        """
+        :return: Current iteration of Sudoku-Grid
+        """
         return self.sudoku
 
     def get_stack(self):
+        """
+        :return: Current iteration of stack
+        """
         return self.stack
 
     def print_sudoku(self):
+        """
+        Printing function used for testing
+        Prints current iteration of sudoku grid into console
+        """
         row_count = 0
         column_count = 0
 
@@ -310,13 +380,6 @@ for count in range(300):
     abc.print_sudoku()
     abc.get_stack()
     abc.get_main_sudoku()
-    # if count == 1:
-        # abc.remove_clue(4, 6, 1)
-        # abc.remove_clue(4, 7, 1)
-        # abc.remove_clue(4, 8, 1)
-        # abc.remove_clue(4, 6, 7)
-        # abc.remove_clue(4, 7, 7)
-        # abc.remove_clue(4, 8, 7)
     print(f'Iterations: {count}')
     if abc.is_solved():
         break

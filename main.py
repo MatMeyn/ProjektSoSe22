@@ -1,74 +1,38 @@
-import tkinter as tk
-from tkinter import ttk
+import PySimpleGUI as sg
+import random
 import time
 import sudokusolver
 
 
-class MainApplication(tk.Frame):
-    def __init__(self, parent):
-        tk.Frame.__init__(self, parent)
-        self.parent = parent
-        self.parent.title('SudokuSolver')
-        self.parent.geometry('550x470')
-        self.parent.attributes('-toolwindow', True)
-        self.testtext = 'test'
-        ttk.Label(parent, text=self.testtext).pack(anchor='e', padx=10, ipady=25)
-        self.after(20, self.task)
-
-    def task(self):
-        for i in range(1000):
-            self.testtext = 'a' + str(i)
-        self.after(20, self.task)
-
 def main():
-    input_from_tkinter = []
-    sudoku = sudokusolver.SudokuSolver(input_from_tkinter)
-    root = tk.Tk()
-    MainApplication(root)
-    root.mainloop()
+    window = sg.Window('SudokuSolver',
+                       [[sg.Frame('',
+                                  [[sg.I(random.randint(1, 9),
+                                    justification='r',
+                                    size=(3, 1),
+                                    enable_events=True,
+                                    key=(fr * 3 + r, fc * 3 + c)) for c in range(3)] for r in range(3)]) for fc in range(3)] for fr in range(3)] +
+                       [[sg.B('Solve'),
+                         sg.B('Check'),
+                         sg.B('Hint'),
+                         sg.B('New Game'),
+                         sg.T('Mask rate (0-1)'),
+                         sg.In(str(0.7),
+                               size=(3, 1),
+                               key='-RATE-')], ],
+                       finalize=True)
+    while True:  # The Event Loop
+        event, values = window.read()
+        if event == 'Check':
+            sg.Window('test',list(),None,)
+        if event == sg.WIN_CLOSED:
+            break
+    #input_from_tkinter = []
+    #sudoku = sudokusolver.SudokuSolver(input_from_tkinter)
 
 
 if __name__ == '__main__':
     main()
 
-
-def leftovers():
-    class Entrygrid:
-        def __init__(self, parent):
-            # Sudoku
-
-            self.entries = []
-            for a in range(9):
-                for b in range(9):
-                    self.temp = ttk.Entry(parent, width=5, justify='center')
-                    self.temp.place(x=50 * a, y=50 * b, height=50, width=50)
-                    self.entries.append(self.temp.get())
-
-        def get_entries(self):
-            return self.entries
-
-    class Buttons(tk.Frame):
-        def __init__(self, parent):
-            # Buttons
-            ttk.Button(parent, text='Solve').pack(anchor='e', padx=10, ipady=25)
-            ttk.Button(parent, text='Stop').pack(anchor='e', padx=10, ipady=25)
-            ttk.Button(parent, text='Reset', command=self.get_entrylist).pack(anchor='e', padx=10, ipady=25)
-            ttk.Label(parent, text='Speed').pack(anchor='e', padx=28, ipady=25)
-            ttk.Scale(parent).pack(anchor='e')
-
-        def get_entrylist(self):
-            pass
-
-    class MainApplication(tk.Frame):
-        def __init__(self, parent):
-            tk.Frame.__init__(self, parent)
-            self.parent = parent
-            self.parent.title('SudokuSolver')
-            self.parent.geometry('550x470')
-            self.parent.attributes('-toolwindow', True)
-
-            self.entrygrid = Entrygrid(parent)
-            self.buttons = Buttons(parent)
-            print(self.entrygrid.get_entries())
 
 
