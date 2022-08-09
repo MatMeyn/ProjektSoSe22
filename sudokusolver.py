@@ -72,12 +72,7 @@ class SudokuSolver:
 
     # helper functions
     def create_2d(self, unfinished_sudoku) -> list:
-        """
-        Puts a list of all possibilities where a tile is unsolved
-
-        :param unfinished_sudoku:
-        :return: Sudoku Template used by this class
-        """
+        """ Puts a list of all possibilities where a tile is unsolved """
         empty_sudoku = [[self.all_possibilities.copy() for _ in range(9)] for _ in range(9)]
         for i in range(9):
             for j in range(9):
@@ -86,9 +81,7 @@ class SudokuSolver:
         return empty_sudoku
 
     def is_solved(self) -> bool:
-        """
-        Check if every tile is solved
-        """
+        """ Check if every tile is solved """
         solved = 0
         for i in range(9):
             for j in range(9):
@@ -97,12 +90,9 @@ class SudokuSolver:
         return solved == 81
 
     def count_clues_in_box(self, box) -> collections.Counter:
-        """
-        Helper function for every function that needs to know the count of a clue in a box.
-
+        """ Helper function for every function that needs to know the count of a clue in a box.
         :param box: Index of Sudoku box between 1-9
-        :return: Counter-Object containing counts of every clue
-        """
+        :return: Counter-Object containing counts of every clue """
         counter_local = collections.Counter()
         for index in subgrids[box]:
             x = index[0]
@@ -113,9 +103,7 @@ class SudokuSolver:
 
     # lamda?
     def initiate_stack(self):
-        """
-        Initiates the stack with every already solved tile.
-        """
+        """ Initiates the stack with every already solved tile. """
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], list):
@@ -124,13 +112,7 @@ class SudokuSolver:
                     self.stack_append(row=i, column=j, number=self.sudoku[i][j])
 
     def stack_append(self, row, column, number):
-        """
-        Appends a solved tile to the stack, if not already present.
-
-        :param row: row-index of solved tile
-        :param column: column-index of solved tile
-        :param number: number of solved tile
-        """
+        """ Appends a solved tile to the stack, if not already present."""
         if not any((d["row"] == row and d["column"] == column and d["number"] == number) for d in self.stack):
             self.stack.append({
                 "row": row,
@@ -139,10 +121,8 @@ class SudokuSolver:
             })
 
     def set_digit(self):
-        """
-        Takes a solved tile from the stack to collapse every clue it influences,
-        and set it in the Sudoku-Grid if not already present.
-        """
+        """ Takes a solved tile from the stack to collapse every clue it influences,
+        and set it in the Sudoku-Grid if not already present. """
         top = self.stack.pop()
         row = top["row"]
         column = top["column"]
@@ -154,14 +134,11 @@ class SudokuSolver:
             self.sudoku[row][column] = number
 
     def solve_next(self) -> list:
-        """
-        TODO: Expand explanation
+        """ TODO: Expand explanation
         This is the main solving function, used by the GUI.
         If the stack is not empty it collapses clues for the next solved tile,
         else it tries other solving functions.
-
-        :return: next Iteration of Sudoku-Grid
-        """
+        :return: next Iteration of Sudoku-Grid """
         if len(self.stack) > 0:
             self.set_digit()
         else:
@@ -169,13 +146,10 @@ class SudokuSolver:
             # self.box_line()
             self.set_single_clue()
             self.set_last_possible()
-
         return self.sudoku
 
     def set_single_clue(self):
-        """
-        Solves a tile if there is only a single clue left
-        """
+        """ Solves a tile if there is only a single clue left """
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], list):
@@ -188,9 +162,7 @@ class SudokuSolver:
 
     # Solving-functions
     def set_last_possible(self):
-        """
-        Solves a tile if it contains the last possible number in a row, column or box
-        """
+        """ Solves a tile if it contains the last possible number in a row, column or box """
         # row
         counter_hor = collections.Counter()
         for i in range(9):
@@ -241,25 +213,14 @@ class SudokuSolver:
 
     # Reductive functions
     def remove_clue(self, row, column, number):
-        """
-        Helper function to remove a single clue from a single tile
-
-        :param row: row-index
-        :param column: column-index
-        :param number: Number of clue to remove
-        """
+        """ Helper function to remove a single clue from a single tile """
         if isinstance(self.sudoku[row][column], list):
             if number in self.sudoku[row][column]:
                 self.sudoku[row][column].remove(number)
 
     # collapsing clues after setting of new number
     def collapse(self, row, column, number):
-        """
-        Collapses the clues of a given number in the row, column and box of the given solved tile
-        :param row: row-index of solved tile
-        :param column: column-index of solved tile
-        :param number: number of solved tile
-        """
+        """ Collapses the clues of a given number in the row, column and box of the given solved tile """
         print(f"collapsing {number} in row {row} column {column}")
         # collapsing row and column
         for x in range(9):
@@ -276,9 +237,7 @@ class SudokuSolver:
 
     # pointing pairs and triples
     def pointing(self):
-        """
-        Solving strategy pointing pairs and pointing triples
-        """
+        """ Solving strategy pointing pairs and pointing triples """
         for box in self.subgrid:
             box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c in curr. box
             box_columns = set([column for row, column in self.subgrid[box]])
@@ -319,22 +278,16 @@ class SudokuSolver:
 
     # test-functions
     def get_main_sudoku(self):
-        """
-        :return: Current iteration of Sudoku-Grid
-        """
+        """ :return: Current iteration of Sudoku-Grid """
         return self.sudoku
 
     def get_stack(self):
-        """
-        :return: Current iteration of stack
-        """
+        """ :return: Current iteration of stack """
         return self.stack
 
     def print_sudoku(self):
-        """
-        Printing function used for testing
-        Prints current iteration of sudoku grid into console
-        """
+        """ Printing function used for testing
+        Prints current iteration of sudoku grid into console """
         row_count = 0
         column_count = 0
 
