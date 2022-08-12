@@ -11,8 +11,12 @@ def main():
 def update_labels():
     sudoku.solve_next()
     for row_matrix, row_labels in zip(sudoku.get_main_sudoku(), labels):
-        for item, label in zip(row_matrix, row_labels):
-            label["text"] = item
+        for cell_content, label in zip(row_matrix, row_labels):
+            label["text"] = cell_content
+            if isinstance(cell_content, int):
+                label.config(font=15, fg='black')
+            if isinstance(cell_content, list):
+                label.config(fg='red')
 
 
 def test_without_GUI(sudoku):
@@ -35,13 +39,13 @@ if __name__ == '__main__':
     #test_without_GUI(sudoku)
     root = tk.Tk()
     root.title("SudokuSolver")
-    root.geometry("1500x300")
+    root.geometry("1200x900")
 
     labels = []
     for i, block_row in enumerate(sudoku.get_main_sudoku()):
         row = []
         for j, block in enumerate(block_row):
-            block = tk.Label(root, text=f'{block}')
+            block = tk.Label(root, text=f'{block}', height=3, width=3, borderwidth=1, relief='solid')
             block.grid(row=i, column=j)
             row.append(block)
         labels.append(row)
