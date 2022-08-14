@@ -13,8 +13,9 @@ class Gui:
         self.labels = self.initial()
 
         self.button = tk.Button(self.root, text="next", command=self.update_labels)
-        self.button.grid(sticky='sw')
+        self.button.grid(column=200, row=1, sticky='ne')
         self.root.bind('<Button-1>', self.update_labels())
+
 
     def initial(self):
         labels = []
@@ -23,8 +24,12 @@ class Gui:
             for j, block in enumerate(block_row):
                 temp = block
                 if isinstance(temp, list):
-                    temp = ','.join([str(elem) for elem in temp])
-                block = tk.Label(self.root, text=f'{temp}', height=5, width=5, borderwidth=1, relief='solid')
+                    temp = self.clues_to_str(temp)
+                block = tk.Label(self.root,
+                                 text=f'{temp}',
+                                 height=4,
+                                 width=8,
+                                 relief='solid')
                 block.grid(row=i, column=j)
                 row.append(block)
             labels.append(row)
@@ -35,9 +40,24 @@ class Gui:
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
             for cell_content, label in zip(row_matrix, row_labels):
                 if isinstance(cell_content, int):
-                    label.config(font=15, fg='black')
+                    label.config(font='Arial 12 bold',
+                                 fg='black')
                 if isinstance(cell_content, list):
-                    label.config(fg='red')
-                    cell_content = '-'.join([str(elem) for elem in cell_content])
-                    print(cell_content)
+                    label.config(font='Arial 10',
+                                 fg='red')
+                    cell_content = self.clues_to_str(cell_content)
                 label["text"] = cell_content
+
+    def clues_to_str(self, clues_list):
+        """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""
+        string = ''
+        for i in range(9):
+            if i in clues_list:
+                string += ''.join(str(i))
+            else:
+                string += ' '
+            if i % 3 == 0:
+                string += '\n'
+            else:
+                string += ' '
+        return string + '\n'
