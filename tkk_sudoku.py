@@ -1,7 +1,9 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import *
 from sudokusolver import SudokuSolver
 import template_sudokus as ts
+
 
 class Gui:
     def __init__(self, root):
@@ -16,7 +18,6 @@ class Gui:
         self.button.grid(column=200, row=1, sticky='ne')
         self.root.bind('<Button-1>', self.update_labels())
 
-
     def initial(self):
         labels = []
         for i, block_row in enumerate(self.sudoku.get_main_sudoku()):
@@ -25,12 +26,15 @@ class Gui:
                 temp = block
                 if isinstance(temp, list):
                     temp = self.clues_to_str(temp)
+                pady = 50 if ((i + 1) % 3 == 0) else 1
+                padx = 50 if ((j + 1) % 3 == 0) and pady == 50 else 1
                 block = tk.Label(self.root,
-                                 text=f'{temp}',
+                                 text=temp,
                                  height=4,
                                  width=8,
-                                 relief='solid')
-                block.grid(row=i, column=j)
+                                 relief='solid',
+                                )
+                block.grid(row=i, column=j, pady=(0, pady), padx=(0, padx))
                 row.append(block)
             labels.append(row)
         return labels
@@ -50,14 +54,14 @@ class Gui:
 
     def clues_to_str(self, clues_list):
         """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""
-        string = ''
-        for i in range(9):
+        string = '\n'
+        for i in range(1, 10):
             if i in clues_list:
                 string += ''.join(str(i))
             else:
-                string += ' '
+                string += '  '
             if i % 3 == 0:
                 string += '\n'
             else:
-                string += ' '
-        return string + '\n'
+                string += '   '
+        return string

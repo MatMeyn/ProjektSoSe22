@@ -6,6 +6,7 @@ from tkk_sudoku import Gui
 def main():
     # test_without_GUI(sudoku)
     root = tk.Tk()
+    root.configure(background='black')
     gui = Gui(root)
     root.mainloop()
 
