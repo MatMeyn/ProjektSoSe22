@@ -4,19 +4,22 @@ from tkinter import *
 from sudokusolver import SudokuSolver
 import template_sudokus as ts
 
-
+#TODO: highlight top of stack?
+#TODO: Buttons: Solve, Speed, Stop, Import, Import from String
+#TODO: Adjust Window Size
+#TODO: Adjust Fontsize
+#TODO: Backtracking solve
 class Gui:
     def __init__(self, root):
-        self.sudoku = SudokuSolver(ts.test_sudoku)
+        self.sudoku = SudokuSolver(ts.hard_sudoku)
         self.root = root
         self.root.title("SudokuSolver")
         self.root.geometry("1200x900")
 
+        self.time_delay = 100
         self.labels = self.initial()
 
-        self.button = tk.Button(self.root, text="next", command=self.update_labels)
-        self.button.grid(column=200, row=1, sticky='ne')
-        self.root.bind('<Button-1>', self.update_labels())
+        self.initialize_buttons()
 
     def initial(self):
         labels = []
@@ -26,13 +29,14 @@ class Gui:
                 temp = block
                 if isinstance(temp, list):
                     temp = self.clues_to_str(temp)
-                pady = 50 if ((i + 1) % 3 == 0) else 1
-                padx = 50 if ((j + 1) % 3 == 0) and pady == 50 else 1
+                pady = 5 if ((i + 1) % 3 == 0) else 1
+                padx = 5 if ((j + 1) % 3 == 0) else 1
                 block = tk.Label(self.root,
                                  text=temp,
                                  height=4,
                                  width=8,
                                  relief='solid',
+                                 font='Arial 12 bold'
                                 )
                 block.grid(row=i, column=j, pady=(0, pady), padx=(0, padx))
                 row.append(block)
@@ -43,14 +47,13 @@ class Gui:
         self.sudoku.solve_next()
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
             for cell_content, label in zip(row_matrix, row_labels):
-                if isinstance(cell_content, int):
-                    label.config(font='Arial 12 bold',
-                                 fg='black')
                 if isinstance(cell_content, list):
-                    label.config(font='Arial 10',
-                                 fg='red')
+                    label.config(fg='red')
                     cell_content = self.clues_to_str(cell_content)
                 label["text"] = cell_content
+        if self.sudoku.is_solved():
+            print('solved')
+        self.root.after(self.time_delay, self.update_labels)
 
     def clues_to_str(self, clues_list):
         """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""
@@ -65,3 +68,8 @@ class Gui:
             else:
                 string += '   '
         return string
+
+    def initialize_buttons(self):
+        solve_button = tk.Button(self.root, text="next", command=self.update_labels)
+        solve_button.grid(column=200, row=1, sticky='ne')
+        self.root.bind('<Button-1>', self.update_labels)

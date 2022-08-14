@@ -1,6 +1,8 @@
 import collections
 from subgrid import subgrids
 
+#TODO: Better issolved function
+#TODO: create_2d should accept Stringtemplates
 class SudokuSolver:
     def __init__(self, unfinished_sudoku):
         self.stack = []
