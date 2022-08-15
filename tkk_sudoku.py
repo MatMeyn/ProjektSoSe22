@@ -6,22 +6,28 @@ import template_sudokus as ts
 
 
 # TODO: highlight top of stack?
-# TODO: Buttons: Solve, Speed, Stop, Import, Import from String
+# TODO: Buttons: Import, Import from String
 # TODO: Adjust Window Size
 # TODO: Adjust Fontsize
 # TODO: Backtracking solve
 class Gui:
     def __init__(self, root):
-        self.sudoku = SudokuSolver(ts.hard_sudoku)
+        self.sudoku = SudokuSolver(ts.expert1)
         self.root = root
         self.root.title("SudokuSolver")
         self.root.geometry("1200x900")
 
         self.stop = False
-        self.time_delay = 1
+        self.time_delay = 10
         self.labels = self.initial()
 
-        self.initialize_buttons()
+        self.solve_button = tk.Button(self.root, text="Start", command=self.start_function, state='active',
+                                      height=1, width=10)
+        self.solve_button.grid(column=10, row=0)
+
+        self.stop_button = tk.Button(self.root, text="Stop", command=self.stop_function, state='disabled',
+                                     height=1, width=10)
+        self.stop_button.grid(column=10, row=0, sticky='s')
 
         self.slider = tk.Scale(self.root,
                                from_=1,
@@ -29,7 +35,7 @@ class Gui:
                                label='Solve/ms',
                                orient='horizontal',
                                command=self.slider_change)
-        self.slider.grid(column=200, row=4, sticky='ne')
+        self.slider.grid(column=10, row=1)
 
     def initial(self):
         labels = []
@@ -84,20 +90,15 @@ class Gui:
 
     def stop_function(self):
         self.stop = True
+        self.solve_button['state'] = 'active'
+        self.stop_button['state'] = 'disabled'
 
     def start_function(self):
         self.stop = False
+        self.stop_button['state'] = 'active'
+        self.solve_button['state'] = 'disabled'
         self.root.after(self.time_delay, self.update_labels)
 
     def slider_change(self, var):
         self.time_delay = self.slider.get()
 
-    def initialize_buttons(self):
-        solve_button = tk.Button(self.root, text="next", command=self.update_labels)
-        solve_button.grid(column=200, row=1, sticky='ne')
-
-        stop_button = tk.Button(self.root, text="Stop", command=self.stop_function)
-        stop_button.grid(column=200, row=2, sticky='ne')
-
-        start_button = tk.Button(self.root, text="Start", command=self.start_function)
-        start_button.grid(column=200, row=3, sticky='ne')

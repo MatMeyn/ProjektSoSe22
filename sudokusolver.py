@@ -2,7 +2,7 @@ import collections
 from subgrid import subgrids
 
 #TODO: Better issolved function
-#TODO: create_2d should accept Stringtemplates
+
 class SudokuSolver:
     def __init__(self, unfinished_sudoku):
         self.stack = []
@@ -10,18 +10,19 @@ class SudokuSolver:
         self.all_possibilities = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         self.rows = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.columns = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        self.sudoku = self.create_2d(unfinished_sudoku)
+        self.sudoku = self.create_2d_from_string(unfinished_sudoku)
         self.initiate_stack()
 
     # helper functions
-    def create_2d(self, unfinished_sudoku) -> list:
-        """ Puts a list of all possibilities where a tile is unsolved """
-        empty_sudoku = [[self.all_possibilities.copy() for _ in range(9)] for _ in range(9)]
-        for i in range(9):
-            for j in range(9):
-                if unfinished_sudoku[i][j] > 0:
-                    empty_sudoku[i][j] = unfinished_sudoku[i][j]
-        return empty_sudoku
+    def create_2d_from_string(self, unfinished_sudoku) -> list:
+        """Converts String to 2d Array and puts a list of all possibilities where a tile is unsolved (0 in string)"""
+        unf = []
+        for i in range(len(unfinished_sudoku)):
+            if i % 9 == 0:
+                sub = unfinished_sudoku[i:i + 9]
+                lst = [int(x) if int(x) > 0 else self.all_possibilities.copy() for x in sub]
+                unf.append(lst)
+        return unf
 
     def is_solved(self) -> bool:
         """ Check if every tile is solved """
@@ -228,6 +229,7 @@ class SudokuSolver:
         """ :return: Current iteration of stack """
         return self.stack
 
+    #kann weg wenn finished
     def print_sudoku(self):
         """ Printing function used for testing
         Prints current iteration of sudoku grid into console """
