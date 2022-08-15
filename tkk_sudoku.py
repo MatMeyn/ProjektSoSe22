@@ -10,6 +10,8 @@ import template_sudokus as ts
 # TODO: Adjust Window Size
 # TODO: Adjust Fontsize
 # TODO: Backtracking solve
+# TODO: Naked/Hidden Pair
+# TODO: box-line reduction
 class Gui:
     def __init__(self, root):
         self.sudoku = SudokuSolver(ts.expert1)
