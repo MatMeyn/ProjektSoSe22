@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import *
 from sudokusolver import SudokuSolver
 import template_sudokus as ts
-
+from template_sudokus import combo_list, combo_dict
 
 # TODO: highlight top of stack?
 # TODO: Buttons: Import, Import from String
@@ -14,22 +14,30 @@ import template_sudokus as ts
 # TODO: box-line reduction
 class Gui:
     def __init__(self, root):
-        self.sudoku = SudokuSolver(ts.expert1)
         self.root = root
         self.root.title("SudokuSolver")
-        self.root.geometry("1200x900")
+        self.root.geometry("1000x800")
 
-        self.stop = False
+        self.sudoku = None
+        self.stop = True
         self.time_delay = 10
         self.labels = self.initial()
 
-        self.solve_button = tk.Button(self.root, text="Start", command=self.start_function, state='active',
+        self.combo_var = tk.StringVar()
+        self.combo_box = ttk.Combobox(self.root, values=combo_list, textvariable=self.combo_var)
+        self.combo_box.grid(column=10, row=0)
+
+        self.import_button = tk.Button(self.root, text="Import", command=self.import_sudoku,
+                                       height=1, width=10)
+        self.import_button.grid(column=10, row=0, sticky='s')
+
+        self.solve_button = tk.Button(self.root, text="Start", command=self.start_function, state='disabled',
                                       height=1, width=10)
-        self.solve_button.grid(column=10, row=0)
+        self.solve_button.grid(column=10, row=1)
 
         self.stop_button = tk.Button(self.root, text="Stop", command=self.stop_function, state='disabled',
                                      height=1, width=10)
-        self.stop_button.grid(column=10, row=0, sticky='s')
+        self.stop_button.grid(column=10, row=1, sticky='s')
 
         self.slider = tk.Scale(self.root,
                                from_=1,
@@ -37,20 +45,28 @@ class Gui:
                                label='Solve/ms',
                                orient='horizontal',
                                command=self.slider_change)
-        self.slider.grid(column=10, row=1)
+        self.slider.grid(column=10, row=2)
 
+    def import_sudoku(self):
+        self.sudoku = SudokuSolver(combo_dict[self.combo_var.get()])
+        self.update_labels()
+        self.solve_button['state'] = 'active'
+
+    # auskommentierte sachen sind aus der alten version, diese version lädt ein leeres grid
     def initial(self):
         labels = []
-        for i, block_row in enumerate(self.sudoku.get_main_sudoku()):
+        for i in range(9):
+        #for i, block_row in enumerate(self.sudoku.get_main_sudoku()):
             row = []
-            for j, block in enumerate(block_row):
-                temp = block
-                if isinstance(temp, list):
-                    temp = self.clues_to_str(temp)
+            for j in range(9):
+            #for j, block in enumerate(block_row):
+                #temp = block
+                #if isinstance(temp, list):
+                #    temp = self.clues_to_str(temp)
                 pady = 5 if ((i + 1) % 3 == 0) else 1
                 padx = 5 if ((j + 1) % 3 == 0) else 1
                 block = tk.Label(self.root,
-                                 text=temp,
+                                 #text=temp,
                                  height=4,
                                  width=8,
                                  relief='solid',
@@ -62,7 +78,6 @@ class Gui:
         return labels
 
     def update_labels(self):
-        self.sudoku.solve_next()
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
             for cell_content, label in zip(row_matrix, row_labels):
                 if isinstance(cell_content, list):
@@ -74,6 +89,7 @@ class Gui:
         if self.sudoku.is_solved():
             print('solved')
         if not self.stop:
+            self.sudoku.solve_next()
             self.root.after(self.time_delay, self.update_labels)
 
     def clues_to_str(self, clues_list):
