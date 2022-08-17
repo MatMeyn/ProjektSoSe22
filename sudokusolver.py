@@ -222,11 +222,9 @@ class SudokuSolver:
 
     # test-functions
     def get_main_sudoku(self):
-        """ :return: Current iteration of Sudoku-Grid """
         return self.sudoku
 
     def get_stack(self):
-        """ :return: Current iteration of stack """
         return self.stack
 
     #kann weg wenn finished
