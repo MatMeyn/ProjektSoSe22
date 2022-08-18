@@ -10,7 +10,7 @@ from template_sudokus import combo_list, combo_dict
 # TODO: Backtracking solve
 # TODO: Naked/Hidden Pair
 # TODO: box-line reduction
-
+# TODO: finished numbers in green?
 
 class Gui:
     def __init__(self, root):

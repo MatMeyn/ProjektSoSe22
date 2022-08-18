@@ -87,7 +87,7 @@ class SudokuSolver:
             self.set_digit()
         else:
             self.pointing()
-            # self.box_line()
+            # self.box_line() #intermediate3 hat eine boxline reduction in box 4 2/9
             self.set_single_clue()
             self.set_last_possible()
         #return self.sudoku
