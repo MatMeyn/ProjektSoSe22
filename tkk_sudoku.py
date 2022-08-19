@@ -5,8 +5,7 @@ from template_sudokus import combo_list, combo_dict
 
 # TODO: highlight top of stack?
 # TODO: Buttons: Import from String
-# TODO: Adjust Window Size
-# TODO: Adjust Fontsize
+# TODO: solved label
 # TODO: Backtracking solve
 # TODO: Naked/Hidden Pair
 # TODO: box-line reduction
@@ -79,11 +78,14 @@ class Gui:
                 if isinstance(cell_content, int):
                     label.config(fg='black')
                 label["text"] = cell_content
-        if self.sudoku.is_solved():
-            print('this is solved')
+        if self.sudoku.is_complete():
+            if self.sudoku.is_solved():
+                self.stop_function()
+                # activate this sudoku is solved label
         if not self.stop:
             self.sudoku.solve_next()
             self.root.after(self.time_delay, self.update_labels)
+
 
     def clues_to_str(self, clues_list):
         """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""

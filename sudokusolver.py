@@ -19,44 +19,70 @@ class SudokuSolver:
         unf = []
         for i in range(len(unfinished_sudoku)):
             if i % 9 == 0:
-                sub = unfinished_sudoku[i:i + 9]
-                lst = [int(x) if int(x) > 0 else self.all_possibilities.copy() for x in sub]
+                row = unfinished_sudoku[i:i + 9]
+                lst = [int(x) if int(x) > 0 else self.all_possibilities.copy() for x in row]
                 unf.append(lst)
         return unf
 
-    def is_solved(self) -> bool:
-        """ Check if every tile is solved """
-        solved = 0
+    def is_complete(self) -> bool:
+        """ Check if every tile is filled """
+        complete = 0
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], int):
-                    solved += 1
-        return solved == 81
+                    complete += 1
+        return complete == 81
+
+    def is_solved(self) -> bool:
+        """ Check if every row and every column adds to 45.
+        Since 45 is the sum of 1 to 9, if that is true for every row and every column the sudoku is solved"""
+        row_sums = [sum(row) for row in self.sudoku]
+        col_sums = [sum(col) for col in zip(*self.sudoku)]
+        if any((d != 45) for d in row_sums) or any((d != 45) for d in col_sums):
+            return False
+        else:
+            return True
 
     def count_clues_in_box(self, box) -> collections.Counter:
-        """ Helper function for every function that needs to know the count of a clue in a box.
+        """ Helper function for every function that needs to know the count of clues in a box.
         :param box: Index of Sudoku box between 1-9
         :return: Counter-Object containing counts of every clue """
-        counter_local = collections.Counter()
+        counter_box = collections.Counter()
         for index in self.subgrid[box]:
             x = index[0]
             y = index[1]
             if isinstance(self.sudoku[x][y], list):
-                counter_local.update(collections.Counter(self.sudoku[x][y]))
-        return counter_local
+                counter_box.update(collections.Counter(self.sudoku[x][y]))
+        return counter_box
+
+    def count_clues_in_row(self, row) -> collections.Counter:
+        """ Helper function for every function that needs to know the count of clues in a row. """
+        counter_row = collections.Counter()
+        for j in range(9):
+            if isinstance(self.sudoku[row][j], list):
+                counter_temp = collections.Counter(self.sudoku[row][j])
+                counter_row += counter_temp
+        return counter_row
+
+    def count_clues_in_column(self, column) -> collections.Counter:
+        """ Helper function for every function that needs to know the count of clues in a column. """
+        counter_column = collections.Counter()
+        for i in range(9):
+            if isinstance(self.sudoku[i][column], list):
+                counter_temp = collections.Counter(self.sudoku[i][column])
+                counter_column += counter_temp
+        return counter_column
 
     # lamda?
     def initiate_stack(self):
         """ Initiates the stack with every already solved tile. """
         for i in range(9):
             for j in range(9):
-                if isinstance(self.sudoku[i][j], list):
-                    pass
-                else:
+                if isinstance(self.sudoku[i][j], int):
                     self.stack_append(row=i, column=j, number=self.sudoku[i][j])
 
     def stack_append(self, row, column, number):
-        """ Appends a solved tile to the stack, if not already present."""
+        """ Appends a solved tile to the stack if not already present."""
         if not any((d["row"] == row and d["column"] == column and d["number"] == number) for d in self.stack):
             self.stack.append({
                 "row": row,
@@ -66,14 +92,12 @@ class SudokuSolver:
 
     def set_digit(self):
         """ Takes a solved tile from the stack to collapse every clue it influences,
-        and set it in the Sudoku-Grid if not already present. """
+        and set it in the sudoku grid if not already present. """
         top = self.stack.pop()
         row = top["row"]
         column = top["column"]
         number = top["number"]
-        print(f"pulled {top} from stack")
         self.collapse(row, column, number)
-
         if isinstance(self.sudoku[row][column], list):
             self.sudoku[row][column] = number
 
@@ -86,8 +110,10 @@ class SudokuSolver:
         if len(self.stack) > 0:
             self.set_digit()
         else:
+            # self.naked_pairs() #intermediate3 hat ein naked pair in box 4 2/9
+            # self.naked_triples()
             self.pointing()
-            # self.box_line() #intermediate3 hat eine boxline reduction in box 4 2/9
+            # self.box_line()
             self.set_single_clue()
             self.set_last_possible()
         #return self.sudoku
@@ -101,59 +127,42 @@ class SudokuSolver:
                         # umwandlung von list zu int einfacher möglich?
                         temp = self.sudoku[i][j].copy()
                         num = temp.pop()
-                        print(f"giving single clue {num} row {i} column {j} to stack")
                         self.stack_append(row=i, column=j, number=num)
 
     # Solving-functions
     def set_last_possible(self):
         """ Solves a tile if it contains the last possible number in a row, column or box """
         # row
-        counter_hor = collections.Counter()
         for i in range(9):
-            for j in range(9):
-                if isinstance(self.sudoku[i][j], list):
-                    counter_temp = collections.Counter(self.sudoku[i][j])
-                    counter_hor += counter_temp
-            digits = [k for k, v in counter_hor.items() if v == 1]
-            print(f"digits {digits}")
-            print(f"counter_horizontal {counter_hor}")
-            counter_hor.clear()
-            for digit in digits:
+            counter_row = self.count_clues_in_row(row=i)
+            single_clue_row = [k for k, v in counter_row.items() if v == 1]
+            counter_row.clear()
+            for num in single_clue_row:
                 for j in range(9):
-                    if isinstance(self.sudoku[i][j], list) and digit in self.sudoku[i][j]:
-                        print(f"last_possible_horizontal giving {digit} row {i} colum {j} to set_digit")
-                        self.stack_append(row=i, column=j, number=digit)
+                    if isinstance(self.sudoku[i][j], list) and num in self.sudoku[i][j]:
+                        self.stack_append(row=i, column=j, number=num)
 
         # column
-        counter_ver = collections.Counter()
-        for i in range(9):
-            for j in range(9):
-                if isinstance(self.sudoku[j][i], list):
-                    counter_ver.update(collections.Counter(self.sudoku[j][i]))
-            digits = [k for k, v in counter_ver.items() if v == 1]
-            print(f"digits {digits}")
-            print(f"counter_vertical {counter_ver}")
-            counter_ver.clear()
-            for digit in digits:
-                for j in range(9):
-                    if isinstance(self.sudoku[j][i], list) and digit in self.sudoku[j][i]:
-                        print(f"last_possible_vertical giving {digit} row {j} colum {i} to set_digit")
-                        self.stack_append(row=j, column=i, number=digit)
+        for j in range(9):
+            counter_column = self.count_clues_in_column(column=j)
+            single_clue_column = [k for k, v in counter_column.items() if v == 1]
+            counter_column.clear()
+            for num in single_clue_column:
+                for i in range(9):
+                    if isinstance(self.sudoku[i][j], list) and num in self.sudoku[i][j]:
+                        self.stack_append(row=i, column=j, number=num)
 
         # box
         for box in self.subgrid:
-            counter_local = self.count_clues_in_box(box)
-            digits = [k for k, v in counter_local.items() if v == 1]
-            print(f"digits {digits}")
-            print(f"counter_local {counter_local}")
-            counter_local.clear()
-            for digit in digits:
+            counter_box = self.count_clues_in_box(box)
+            single_clue_box = [k for k, v in counter_box.items() if v == 1]
+            counter_box.clear()
+            for num in single_clue_box:
                 for index in self.subgrid[box]:
                     x = index[0]
                     y = index[1]
-                    if isinstance(self.sudoku[x][y], list) and digit in self.sudoku[x][y]:
-                        print(f"last_possible_local giving {digit} row {x} column {y} to set_digit")
-                        self.stack_append(row=x, column=y, number=digit)
+                    if isinstance(self.sudoku[x][y], list) and num in self.sudoku[x][y]:
+                        self.stack_append(row=x, column=y, number=num)
 
     # Reductive functions
     def remove_clue(self, row, column, number):
@@ -165,8 +174,6 @@ class SudokuSolver:
     # collapsing clues after setting of new number
     def collapse(self, row, column, number):
         """ Collapses the clues of a given number in the row, column and box of the given solved tile """
-        print(f"collapsing {number} in row {row} column {column}")
-        # collapsing row and column
         for x in range(9):
             self.remove_clue(row=x, column=column, number=number)
             self.remove_clue(row=row, column=x, number=number)
@@ -183,12 +190,12 @@ class SudokuSolver:
     def pointing(self):
         """ Solving strategy pointing pairs and pointing triples """
         for box in self.subgrid:
-            box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c in curr. box
+            box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c indices in curr. box
             box_columns = set([column for row, column in self.subgrid[box]])
-            other_rows = [item for item in self.rows if item not in box_rows]  # all other r/c outside box
-            other_columns = [item for item in self.columns if item not in box_columns]
+            other_rows = [row for row in self.rows if row not in box_rows]  # all other r/c indices outside box
+            other_columns = [col for col in self.columns if col not in box_columns]
             counter = self.count_clues_in_box(box)
-            digits = [(k, v) for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 oder 3 mal vorhanden
+            digits = [(k, v) for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 or 3 times in box
             # rows
             for row in box_rows:
                 counter = collections.Counter()
@@ -211,13 +218,23 @@ class SudokuSolver:
                         for i in other_rows:
                             self.remove_clue(row=i, column=column, number=k[0])
                 counter.clear()
-            print(f"subgrid {box} counts {counter}")
-            print(f"digits only there 2 or 3 times: {digits}")
-            print(f"in this quadrant are rows -> {box_rows} columns -> {box_columns}")
             counter.clear()
 
     # box-line reduction
     def box_line(self):
+        pass
+
+    # naked pairs
+    # intermediate3 2 / 9 mitte
+    def naked_pairs(self):
+        # wenn in einer box 2 zellen mit länge 2 gleich sind können die clues aus der box entfernt werden
+        for box in self.subgrid:
+
+            pass
+
+    # naked triples
+    def naked_triples(self):
+        # wenn in einer box 3 zellen mit länge 3 gleich sind können die clues aus der box entfern werden
         pass
 
     # test-functions
