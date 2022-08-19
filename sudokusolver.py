@@ -55,6 +55,24 @@ class SudokuSolver:
                 counter_box.update(collections.Counter(self.sudoku[x][y]))
         return counter_box
 
+    def count_clues_in_box_row(self, box, row) -> collections.Counter:
+        counter_box_row = collections.Counter()
+        for index in self.subgrid[box]:
+            if index[0] == row:
+                y = index[1]
+                if isinstance(self.sudoku[row][y], list):
+                    counter_box_row.update(collections.Counter(self.sudoku[row][y]))
+        return counter_box_row
+
+    def count_clues_in_box_column(self, box, column) -> collections.Counter:
+        counter_box_col = collections.Counter()
+        for index in self.subgrid[box]:
+            if index[1] == column:
+                x = index[0]
+                if isinstance(self.sudoku[x][column], list):
+                    counter_box_col.update(collections.Counter(self.sudoku[x][column]))
+        return counter_box_col
+
     def count_clues_in_row(self, row) -> collections.Counter:
         """ Helper function for every function that needs to know the count of clues in a row. """
         counter_row = collections.Counter()
@@ -113,7 +131,7 @@ class SudokuSolver:
             # self.naked_pairs() #intermediate3 hat ein naked pair in box 4 2/9
             # self.naked_triples()
             self.pointing()
-            # self.box_line()
+            self.box_line()
             self.set_single_clue()
             self.set_last_possible()
         #return self.sudoku
@@ -187,6 +205,7 @@ class SudokuSolver:
                     self.remove_clue(row=x, column=y, number=number)
 
     # pointing pairs and triples
+    # TODO: use count box row/column functions
     def pointing(self):
         """ Solving strategy pointing pairs and pointing triples """
         for box in self.subgrid:
@@ -222,6 +241,34 @@ class SudokuSolver:
 
     # box-line reduction
     def box_line(self):
+        """ Box line reduction.
+            if a number can only be in 2 or 3 tiles and those tiles are in the same box, you can remove
+            all other clues of that number in that box """
+        for i in range(9):
+            # row
+            row_count = self.count_clues_in_row(row=i)
+            row_num = [(k, v) for k, v in row_count.items() if (v == 2 or v == 3)]
+            for box in self.subgrid.keys():
+                box_row_count = self.count_clues_in_box_row(box=box, row=i)
+                box_23 = [(k, v) for k, v in box_row_count.items() if (v == 2 or v == 3)]
+                for kv in row_num:
+                    if kv in box_23:
+                        indices_to_remove = [x for x in self.subgrid[box] if x[0] != i]
+                        for t in indices_to_remove:
+                            self.remove_clue(row=t[0], column=t[1], number=kv[0])
+
+            # column
+            column_count = self.count_clues_in_column(column=i)
+            col_num = [(k, v) for k, v in column_count.items() if (v == 2 or v == 3)]
+            for box in self.subgrid.keys():
+                box_col_count = self.count_clues_in_box_column(box=box, column=i)
+                box_23 = [(k, v) for k, v in box_col_count.items() if (v == 2 or v == 3)]
+                print(box_23)
+                for kv in col_num:
+                    if kv in box_23:
+                        indices_to_remove = [x for x in self.subgrid[box] if x[1] != i]
+                        for t in indices_to_remove:
+                            self.remove_clue(row=t[0], column=t[1], number=kv[0])
         pass
 
     # naked pairs
