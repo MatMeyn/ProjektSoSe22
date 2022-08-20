@@ -275,6 +275,7 @@ class SudokuSolver:
     # intermediate3 2 / 9 mitte
     def naked_pairs(self):
         # wenn in einer box 2 zellen mit länge 2 gleich sind können die clues aus der box entfernt werden
+
         for box in self.subgrid:
 
             pass
@@ -284,6 +285,9 @@ class SudokuSolver:
         # wenn in einer box 3 zellen mit länge 3 gleich sind können die clues aus der box entfern werden
         pass
 
+    # https://www.learn-sudoku.com/hidden-pairs.html
+    def hidden_pairs(self):
+        pass
     # test-functions
     def get_main_sudoku(self):
         return self.sudoku
