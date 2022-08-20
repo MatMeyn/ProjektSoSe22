@@ -1,7 +1,8 @@
 import collections
 from subgrid import subgrids
 
-#TODO: Better issolved function
+
+# TODO: Better issolved function
 
 class SudokuSolver:
     def __init__(self, unfinished_sudoku):
@@ -128,13 +129,13 @@ class SudokuSolver:
         if len(self.stack) > 0:
             self.set_digit()
         else:
-            # self.naked_pairs() #intermediate3 hat ein naked pair in box 4 2/9
+            self.naked_pairs()  # intermediate3 hat ein naked pair in box 4 2/9
             # self.naked_triples()
             self.pointing()
             self.box_line()
             self.set_single_clue()
             self.set_last_possible()
-        #return self.sudoku
+        # return self.sudoku
 
     def set_single_clue(self):
         """ Solves a tile if there is only a single clue left """
@@ -244,42 +245,74 @@ class SudokuSolver:
         """ Box line reduction.
             if a number can only be in 2 or 3 tiles and those tiles are in the same box, you can remove
             all other clues of that number in that box """
-        for i in range(9):
-            # row
-            row_count = self.count_clues_in_row(row=i)
+        # row
+        for row in self.rows:
+            row_count = self.count_clues_in_row(row=row)
             row_num = [(k, v) for k, v in row_count.items() if (v == 2 or v == 3)]
             for box in self.subgrid.keys():
-                box_row_count = self.count_clues_in_box_row(box=box, row=i)
+                box_row_count = self.count_clues_in_box_row(box=box, row=row)
                 box_23 = [(k, v) for k, v in box_row_count.items() if (v == 2 or v == 3)]
                 for kv in row_num:
                     if kv in box_23:
-                        indices_to_remove = [x for x in self.subgrid[box] if x[0] != i]
+                        indices_to_remove = [x for x in self.subgrid[box] if x[0] != row]
                         for t in indices_to_remove:
                             self.remove_clue(row=t[0], column=t[1], number=kv[0])
-
-            # column
-            column_count = self.count_clues_in_column(column=i)
+        # column
+        for column in self.columns:
+            column_count = self.count_clues_in_column(column=column)
             col_num = [(k, v) for k, v in column_count.items() if (v == 2 or v == 3)]
             for box in self.subgrid.keys():
-                box_col_count = self.count_clues_in_box_column(box=box, column=i)
+                box_col_count = self.count_clues_in_box_column(box=box, column=column)
                 box_23 = [(k, v) for k, v in box_col_count.items() if (v == 2 or v == 3)]
-                print(box_23)
                 for kv in col_num:
                     if kv in box_23:
-                        indices_to_remove = [x for x in self.subgrid[box] if x[1] != i]
+                        indices_to_remove = [x for x in self.subgrid[box] if x[1] != column]
                         for t in indices_to_remove:
                             self.remove_clue(row=t[0], column=t[1], number=kv[0])
-        pass
 
     # naked pairs
-    # intermediate3 2 / 9 mitte
+    # intermediate2 2/8 in col 5
     def naked_pairs(self):
-        # wenn in einer box 2 zellen mit länge 2 gleich sind können die clues aus der box entfernt werden
-
-        for box in self.subgrid:
-
-            pass
-
+        # wenn in einer box/row/column 2 zellen mit länge 2 gleich sind
+        # können die clues aus der box/row/column entfernt werden
+        pairs = []
+        for i in range(9):
+            for j in range(9):
+                if isinstance(self.sudoku[i][j], list) and len(self.sudoku[i][j]) == 2:
+                    pairs.append({
+                        "row": i,
+                        "column": j,
+                        "pair": self.sudoku[i][j]
+                    })
+        # col
+        for i in range(9):
+            col_pairs = list(filter(lambda pair: pair["column"] == i, pairs))
+            for p in col_pairs:
+                test = list(filter(lambda same: same["pair"] == p["pair"], col_pairs))
+                if len(test) == 2:
+                    nums_to_delete = test[0]["pair"]
+                    rows_to_ignore = [d["row"] for d in test]
+                    print(f"col {i}, nums_to_delete{nums_to_delete}, rows_to_ignore{rows_to_ignore}")
+                    for num in nums_to_delete:
+                        for row in self.rows:
+                            if row in rows_to_ignore:
+                                pass
+                            else:
+                                self.remove_clue(row=row, column=i, number=num)
+        # row
+        for i in range(9):
+            row_pairs = list(filter(lambda pair: pair["row"] == i, pairs))
+            for p in row_pairs:
+                test = list(filter(lambda same: same["pair"] == p["pair"], row_pairs))
+                if len(test) == 2:
+                    nums_to_delete = test[0]["pair"]
+                    cols_to_ignore = [d["column"] for d in test]
+                    for num in nums_to_delete:
+                        for col in self.columns:
+                            if col in cols_to_ignore:
+                                pass
+                            else:
+                                self.remove_clue(row=i, column=col, number=num)
     # naked triples
     def naked_triples(self):
         # wenn in einer box 3 zellen mit länge 3 gleich sind können die clues aus der box entfern werden
@@ -288,6 +321,7 @@ class SudokuSolver:
     # https://www.learn-sudoku.com/hidden-pairs.html
     def hidden_pairs(self):
         pass
+
     # test-functions
     def get_main_sudoku(self):
         return self.sudoku
@@ -295,7 +329,7 @@ class SudokuSolver:
     def get_stack(self):
         return self.stack
 
-    #kann weg wenn finished
+    # kann weg wenn finished
     def print_sudoku(self):
         """ Printing function used for testing
         Prints current iteration of sudoku grid into console """
@@ -335,4 +369,3 @@ class SudokuSolver:
             print(top)
             print(middle)
             print(bottom)
-
