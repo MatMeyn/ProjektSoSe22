@@ -6,9 +6,6 @@ from template_sudokus import combo_list, combo_dict
 # TODO: highlight top of stack?
 # TODO: Buttons: Import from String
 # TODO: solved label
-# TODO: Backtracking solve
-# TODO: Naked/Hidden Pair
-# TODO: box-line reduction
 # TODO: finished numbers in green?
 
 class Gui:

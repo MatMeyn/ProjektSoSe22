@@ -12,7 +12,9 @@ class SudokuSolver:
         self.columns = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.sudoku = self.create_2d_from_string(unfinished_sudoku)
         self.sudoku_before_guess = None
+        self.previous_sudoku = None
         self.possible_guess = []
+        self.shortest_list_generator = None
         self.initiate_stack()
 
     # helper functions
@@ -127,7 +129,7 @@ class SudokuSolver:
         If the stack is not empty it collapses clues for the next solved tile,
         else it tries other solving functions.
         :return: next Iteration of Sudoku-Grid """
-        last_sudoku = copy.deepcopy(self.sudoku)
+        self.previous_sudoku = copy.deepcopy(self.sudoku)
         if len(self.stack) > 0:
             self.set_digit()
         else:
@@ -136,9 +138,10 @@ class SudokuSolver:
             self.naked_pairs()
             self.set_single_clue()
             self.set_last_possible()
-        # TODO: das löst zu oft aus, verdächtige set_single_clue weil das nur auf den stack legt ohne was zu verändern
-        if self.sudoku == last_sudoku:
-            self.guess_digit()
+        # if stuck():
+        #   make_a_guess()
+        if self.is_stuck():
+            self.make_a_guess()
 
     def set_single_clue(self):
         """ Solves a tile if there is only a single clue left """
@@ -327,28 +330,49 @@ class SudokuSolver:
                             if (row, col) not in tiles_to_ignore:
                                 self.remove_clue(row=row, column=col, number=num)
 
-    def guess_digit(self):
-        # new guess
-        if len(self.possible_guess) == 0:
-            self.sudoku_before_guess = copy.deepcopy(self.sudoku)
-            self.possible_guess.append(self.shortest_list())
-        elif len(self.possible_guess[0]["guess"]) > 0:
-            num_to_guess = self.possible_guess[0]["guess"].pop()
-            row = self.possible_guess[0]["row"]
-            column = self.possible_guess[0]["column"]
-            self.stack_append(row=row, column=column, number=num_to_guess)
+    def is_stuck(self):
+        return len(self.stack) == 0 and self.sudoku == self.previous_sudoku
 
-    def shortest_list(self):
+    def make_a_guess(self):
+        if self.sudoku_before_guess is None:
+            self.init_guess()
+        if not self.is_valid():
+            self.restore_sudoku()
+
+        print(self.possible_guess)
+        self.guess_digit()
+
+    def init_guess(self):
+        self.sudoku_before_guess = copy.deepcopy(self.sudoku)
+        self.shortest_list_generator = self.create_shortest_list_generator()
+        self.possible_guess.append(self.shortest_list_generator.__next__())
+
+    def guess_digit(self):
+        if len(self.possible_guess[0]["guess"]) == 0:
+            self.possible_guess.clear()
+            self.possible_guess.append(self.shortest_list_generator.__next__())
+        num_to_guess = self.possible_guess[0]["guess"].pop()
+        row = self.possible_guess[0]["row"]
+        column = self.possible_guess[0]["column"]
+        self.stack_append(row=row, column=column, number=num_to_guess)
+
+    def create_shortest_list_generator(self):
         for i in range(2, 9):
             for row in self.rows:
                 for col in self.columns:
                     if isinstance(self.sudoku[row][col], list):
                         if len(self.sudoku[row][col]) == i:
-                            return {"row": row,
-                                    "column": col,
-                                    "guess": [x for x in self.sudoku[row][col]]}
+                            yield {"row": row,
+                                   "column": col,
+                                   "guess": [x for x in self.sudoku[row][col]]}
 
     def is_valid(self):
+        for row in self.rows:
+            for col in self.columns:
+                if isinstance(self.sudoku[row][col], list):
+                    if not len(self.sudoku[row][col]) == 0:
+                        return False
+
         for row in self.rows:
             counter_row = collections.Counter([x for x in self.sudoku[row] if isinstance(self.sudoku[row], int)])
             for count in counter_row.values():
@@ -374,12 +398,6 @@ class SudokuSolver:
             for count in counter_box.values():
                 if count > 1:
                     return False
-
-        for row in self.rows:
-            for col in self.columns:
-                if isinstance(self.sudoku[row][col], list):
-                    if len(self.sudoku[row][col]) == 0:
-                        return False
         return True
 
     def restore_sudoku(self):
@@ -391,7 +409,6 @@ class SudokuSolver:
     def hidden_pairs(self):
         pass
 
-    # test-functions
     def get_main_sudoku(self):
         return self.sudoku
 
