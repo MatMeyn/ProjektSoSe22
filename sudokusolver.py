@@ -284,35 +284,51 @@ class SudokuSolver:
                         "column": j,
                         "pair": self.sudoku[i][j]
                     })
-        # col
+
         for i in range(9):
             col_pairs = list(filter(lambda pair: pair["column"] == i, pairs))
+            row_pairs = list(filter(lambda pair: pair["row"] == i, pairs))
+
+            # col
             for p in col_pairs:
-                test = list(filter(lambda same: same["pair"] == p["pair"], col_pairs))
-                if len(test) == 2:
-                    nums_to_delete = test[0]["pair"]
-                    rows_to_ignore = [d["row"] for d in test]
-                    print(f"col {i}, nums_to_delete{nums_to_delete}, rows_to_ignore{rows_to_ignore}")
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], col_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    rows_to_ignore = [d["row"] for d in naked_pair]
                     for num in nums_to_delete:
                         for row in self.rows:
-                            if row in rows_to_ignore:
-                                pass
-                            else:
+                            if row not in rows_to_ignore:
                                 self.remove_clue(row=row, column=i, number=num)
-        # row
-        for i in range(9):
-            row_pairs = list(filter(lambda pair: pair["row"] == i, pairs))
+            # row
             for p in row_pairs:
-                test = list(filter(lambda same: same["pair"] == p["pair"], row_pairs))
-                if len(test) == 2:
-                    nums_to_delete = test[0]["pair"]
-                    cols_to_ignore = [d["column"] for d in test]
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], row_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    cols_to_ignore = [d["column"] for d in naked_pair]
                     for num in nums_to_delete:
                         for col in self.columns:
-                            if col in cols_to_ignore:
-                                pass
-                            else:
+                            if col not in cols_to_ignore:
                                 self.remove_clue(row=i, column=col, number=num)
+        #box TODO: es geht nicht
+        for box in self.subgrid:
+            box_indices = self.subgrid[box]
+            box_pairs = []
+            for i in box_indices:
+                for pair in pairs:
+                    if pair["row"] == i[0] and pair["column"] == i[1]:
+                        box_pairs.append(pair)
+            for p in box_pairs:
+                print(p)
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], box_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    tiles_to_ignore = [(naked_pair[i]["row"], naked_pair[i]["column"]) for i in range(2)]
+                    for num in nums_to_delete:
+                        for (row, col) in box_indices:
+                            for tile in tiles_to_ignore:
+                                if (row != tile[0]) and (col != tile[1]):
+                                    self.remove_clue(row=row, column=col, number=num)
+
     # naked triples
     def naked_triples(self):
         # wenn in einer box 3 zellen mit länge 3 gleich sind können die clues aus der box entfern werden
