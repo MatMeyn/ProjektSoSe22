@@ -71,13 +71,13 @@ class Gui:
 
     def update_labels(self):
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
-            for cell_content, label in zip(row_matrix, row_labels):
-                if isinstance(cell_content, list):
+            for tile_content, label in zip(row_matrix, row_labels):
+                if isinstance(tile_content, list):
                     label.config(fg='red')
-                    cell_content = self.clues_to_str(cell_content)
-                if isinstance(cell_content, int):
+                    tile_content = self.clues_to_str(tile_content)
+                if isinstance(tile_content, int):
                     label.config(fg='black')
-                label["text"] = cell_content
+                label["text"] = tile_content
         if self.sudoku.is_complete():
             if self.sudoku.is_solved():
                 self.stop_function()
@@ -85,7 +85,6 @@ class Gui:
         if not self.stop:
             self.sudoku.solve_next()
             self.root.after(self.time_delay, self.update_labels)
-
 
     def clues_to_str(self, clues_list):
         """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""
