@@ -1,3 +1,6 @@
+""" Author: Matthias Meyn
+    Project for Skriptsprachen SS2022 """
+
 import collections
 import copy
 from subgrid import subgrids
