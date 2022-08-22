@@ -8,6 +8,22 @@ from template_sudokus import combo_list, combo_dict
 # TODO: solved label
 # TODO: finished numbers in green?
 
+
+def clues_to_str(clues_list) -> str:
+    """Returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing numbers with space"""
+    string = '\n'
+    for i in range(1, 10):
+        if i in clues_list:
+            string += ''.join(str(i))
+        else:
+            string += '  '
+        if i % 3 == 0:
+            string += '\n'
+        else:
+            string += '   '
+    return string
+
+
 class Gui:
     def __init__(self, root):
         self.root = root
@@ -27,9 +43,9 @@ class Gui:
                                        height=1, width=10)
         self.import_button.grid(column=10, row=0, sticky='s')
 
-        self.solve_button = tk.Button(self.root, text='Start', command=self.start_function, state='disabled',
+        self.start_button = tk.Button(self.root, text='Start', command=self.start_function, state='disabled',
                                       height=1, width=10)
-        self.solve_button.grid(column=10, row=1)
+        self.start_button.grid(column=10, row=1)
 
         self.stop_button = tk.Button(self.root, text='Stop', command=self.stop_function, state='disabled',
                                      height=1, width=10)
@@ -44,11 +60,13 @@ class Gui:
         self.slider.grid(column=10, row=2)
 
     def import_sudoku(self):
+        """Function used by the import button. Loads the puzzle into the sudoku solver and activates the start button"""
         self.sudoku = SudokuSolver(combo_dict[self.combo_var.get()])
         self.update_labels()
-        self.solve_button['state'] = 'active'
+        self.start_button['state'] = 'active'
 
-    def initial(self):
+    def initial(self) -> list:
+        """ Creates the initial grid by constructing a label for every tile of the puzzle"""
         labels = []
         for i in range(9):
             row = []
@@ -67,13 +85,19 @@ class Gui:
         return labels
 
     def update_labels(self):
+        """ This function updates the grid to its current content.
+            Changes text color of a tile based on its solving status
+            and changes the background of failed tiles to red.
+            Stops the solver if the stop button is used or the puzzle is solved"""
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
             for tile_content, label in zip(row_matrix, row_labels):
                 if isinstance(tile_content, list):
-                    label.config(fg='red')
-                    tile_content = self.clues_to_str(tile_content)
+                    label.config(fg='red', bg='white')
+                    if len(tile_content) == 0:
+                        label.config(bg='red')
+                    tile_content = clues_to_str(tile_content)
                 if isinstance(tile_content, int):
-                    label.config(fg='black')
+                    label.config(fg='black', bg='white')
                 label["text"] = tile_content
         if self.sudoku.is_complete():
             if self.sudoku.is_solved():
@@ -83,31 +107,20 @@ class Gui:
             self.sudoku.solve_next()
             self.root.after(self.time_delay, self.update_labels)
 
-    def clues_to_str(self, clues_list):
-        """ returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing clues with space"""
-        string = '\n'
-        for i in range(1, 10):
-            if i in clues_list:
-                string += ''.join(str(i))
-            else:
-                string += '  '
-            if i % 3 == 0:
-                string += '\n'
-            else:
-                string += '   '
-        return string
-
     def stop_function(self):
+        """Function used by the stop button. Stops the solving process."""
         self.stop = True
-        self.solve_button['state'] = 'active'
+        self.start_button['state'] = 'active'
         self.stop_button['state'] = 'disabled'
 
     def start_function(self):
+        """Function used by the start button. Starts the solving process."""
         self.stop = False
         self.stop_button['state'] = 'active'
-        self.solve_button['state'] = 'disabled'
+        self.start_button['state'] = 'disabled'
         self.root.after(self.time_delay, self.update_labels)
 
     def slider_change(self, var):
+        """Function used by the slider. Updates the time delay between solving steps"""
         self.time_delay = self.slider.get()
 
