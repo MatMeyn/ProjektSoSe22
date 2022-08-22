@@ -1,3 +1,6 @@
+""" Author: Matthias Meyn
+    Project for Skriptsprachen SS2022 """
+
 import tkinter as tk
 from tkk_sudoku import Gui
 
