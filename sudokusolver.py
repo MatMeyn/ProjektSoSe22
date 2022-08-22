@@ -1,8 +1,7 @@
 import collections
+import copy
 from subgrid import subgrids
 
-
-# TODO: Better issolved function
 
 class SudokuSolver:
     def __init__(self, unfinished_sudoku):
@@ -12,6 +11,10 @@ class SudokuSolver:
         self.rows = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.columns = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.sudoku = self.create_2d_from_string(unfinished_sudoku)
+        self.sudoku_before_guess = None
+        self.previous_sudoku = None
+        self.possible_guess = []
+        self.shortest_list_generator = None
         self.initiate_stack()
 
     # helper functions
@@ -120,22 +123,25 @@ class SudokuSolver:
         if isinstance(self.sudoku[row][column], list):
             self.sudoku[row][column] = number
 
-    def solve_next(self) -> list:
+    def solve_next(self):
         """ TODO: Expand explanation
         This is the main solving function, used by the GUI.
         If the stack is not empty it collapses clues for the next solved tile,
         else it tries other solving functions.
         :return: next Iteration of Sudoku-Grid """
+        self.previous_sudoku = copy.deepcopy(self.sudoku)
         if len(self.stack) > 0:
             self.set_digit()
         else:
-            self.naked_pairs()  # intermediate3 hat ein naked pair in box 4 2/9
-            # self.naked_triples()
             self.pointing()
             self.box_line()
+            self.naked_pairs()
             self.set_single_clue()
             self.set_last_possible()
-        # return self.sudoku
+        # if stuck():
+        #   make_a_guess()
+        if self.is_stuck():
+            self.make_a_guess()
 
     def set_single_clue(self):
         """ Solves a tile if there is only a single clue left """
@@ -271,10 +277,7 @@ class SudokuSolver:
                             self.remove_clue(row=t[0], column=t[1], number=kv[0])
 
     # naked pairs
-    # intermediate2 2/8 in col 5
     def naked_pairs(self):
-        # wenn in einer box/row/column 2 zellen mit länge 2 gleich sind
-        # können die clues aus der box/row/column entfernt werden
         pairs = []
         for i in range(9):
             for j in range(9):
@@ -284,88 +287,130 @@ class SudokuSolver:
                         "column": j,
                         "pair": self.sudoku[i][j]
                     })
-        # col
+
         for i in range(9):
             col_pairs = list(filter(lambda pair: pair["column"] == i, pairs))
+            row_pairs = list(filter(lambda pair: pair["row"] == i, pairs))
+
+            # col
             for p in col_pairs:
-                test = list(filter(lambda same: same["pair"] == p["pair"], col_pairs))
-                if len(test) == 2:
-                    nums_to_delete = test[0]["pair"]
-                    rows_to_ignore = [d["row"] for d in test]
-                    print(f"col {i}, nums_to_delete{nums_to_delete}, rows_to_ignore{rows_to_ignore}")
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], col_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    rows_to_ignore = [d["row"] for d in naked_pair]
                     for num in nums_to_delete:
                         for row in self.rows:
-                            if row in rows_to_ignore:
-                                pass
-                            else:
+                            if row not in rows_to_ignore:
                                 self.remove_clue(row=row, column=i, number=num)
-        # row
-        for i in range(9):
-            row_pairs = list(filter(lambda pair: pair["row"] == i, pairs))
+            # row
             for p in row_pairs:
-                test = list(filter(lambda same: same["pair"] == p["pair"], row_pairs))
-                if len(test) == 2:
-                    nums_to_delete = test[0]["pair"]
-                    cols_to_ignore = [d["column"] for d in test]
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], row_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    cols_to_ignore = [d["column"] for d in naked_pair]
                     for num in nums_to_delete:
                         for col in self.columns:
-                            if col in cols_to_ignore:
-                                pass
-                            else:
+                            if col not in cols_to_ignore:
                                 self.remove_clue(row=i, column=col, number=num)
-    # naked triples
+        # box
+        for box in self.subgrid:
+            box_indices = self.subgrid[box]
+            box_pairs = []
+            for i in box_indices:
+                for pair in pairs:
+                    if pair["row"] == i[0] and pair["column"] == i[1]:
+                        box_pairs.append(pair)
+            for p in box_pairs:
+                naked_pair = list(filter(lambda same: same["pair"] == p["pair"], box_pairs))
+                if len(naked_pair) == 2:
+                    nums_to_delete = naked_pair[0]["pair"]
+                    tiles_to_ignore = [(naked_pair[i]["row"], naked_pair[i]["column"]) for i in range(2)]
+                    for num in nums_to_delete:
+                        for (row, col) in box_indices:
+                            if (row, col) not in tiles_to_ignore:
+                                self.remove_clue(row=row, column=col, number=num)
+
+    def is_stuck(self):
+        return len(self.stack) == 0 and self.sudoku == self.previous_sudoku
+
+    def make_a_guess(self):
+        if self.sudoku_before_guess is None:
+            self.init_guess()
+        if not self.is_valid():
+            self.restore_sudoku()
+
+        print(self.possible_guess)
+        self.guess_digit()
+
+    def init_guess(self):
+        self.sudoku_before_guess = copy.deepcopy(self.sudoku)
+        self.shortest_list_generator = self.create_shortest_list_generator()
+        self.possible_guess.append(self.shortest_list_generator.__next__())
+
+    def guess_digit(self):
+        if len(self.possible_guess[0]["guess"]) == 0:
+            self.possible_guess.clear()
+            self.possible_guess.append(self.shortest_list_generator.__next__())
+        num_to_guess = self.possible_guess[0]["guess"].pop()
+        row = self.possible_guess[0]["row"]
+        column = self.possible_guess[0]["column"]
+        self.stack_append(row=row, column=column, number=num_to_guess)
+
+    def create_shortest_list_generator(self):
+        for i in range(2, 9):
+            for row in self.rows:
+                for col in self.columns:
+                    if isinstance(self.sudoku[row][col], list):
+                        if len(self.sudoku[row][col]) == i:
+                            yield {"row": row,
+                                   "column": col,
+                                   "guess": [x for x in self.sudoku[row][col]]}
+
+    def is_valid(self):
+        for row in self.rows:
+            for col in self.columns:
+                if isinstance(self.sudoku[row][col], list):
+                    if not len(self.sudoku[row][col]) == 0:
+                        return False
+
+        for row in self.rows:
+            counter_row = collections.Counter([x for x in self.sudoku[row] if isinstance(self.sudoku[row], int)])
+            for count in counter_row.values():
+                if count > 1:
+                    return False
+
+        for col in self.columns:
+            counter_col = collections.Counter()
+            for row in self.rows:
+                if isinstance(self.sudoku[row][col], int):
+                    counter_col.update({self.sudoku[row][col]: 1})
+            for count in counter_col.values():
+                if count > 1:
+                    return False
+
+        for box in self.subgrid:
+            counter_box = collections.Counter()
+            for index in self.subgrid[box]:
+                x = index[0]
+                y = index[1]
+                if isinstance(self.sudoku[x][y], int):
+                    counter_box.update({self.sudoku[x][y]: 1})
+            for count in counter_box.values():
+                if count > 1:
+                    return False
+        return True
+
+    def restore_sudoku(self):
+        self.sudoku = copy.deepcopy(self.sudoku_before_guess)
+
     def naked_triples(self):
-        # wenn in einer box 3 zellen mit länge 3 gleich sind können die clues aus der box entfern werden
         pass
 
-    # https://www.learn-sudoku.com/hidden-pairs.html
     def hidden_pairs(self):
         pass
 
-    # test-functions
     def get_main_sudoku(self):
         return self.sudoku
 
     def get_stack(self):
         return self.stack
-
-    # kann weg wenn finished
-    def print_sudoku(self):
-        """ Printing function used for testing
-        Prints current iteration of sudoku grid into console """
-        row_count = 0
-        column_count = 0
-
-        class Color:
-            RED = '\033[91m'
-            BOLD = '\033[1m'
-            END = '\033[0m'
-
-        for elem in self.sudoku:
-            top = "|"
-            middle = "|"
-            bottom = "|"
-            if row_count % 3 == 0:
-                print(Color.BOLD + "_" * 73 + Color.END)
-            else:
-                print("_" * 73)
-            row_count += 1
-            for type in elem:
-                column_count += 3
-                if isinstance(type, list):
-                    possibles = type.copy()
-                    for num in self.all_possibilities:
-                        if num not in possibles:
-                            possibles.insert(num - 1, " ")
-                    top += Color.RED + f" {possibles[0]} {possibles[1]} {possibles[2]} " + Color.END + "|"
-                    middle += Color.RED + f" {possibles[3]} {possibles[4]} {possibles[5]} " + Color.END + "|"
-                    bottom += Color.RED + f" {possibles[6]} {possibles[7]} {possibles[8]} " + Color.END + "|"
-
-                else:
-                    top += "       |"
-                    middle += Color.BOLD + f"   {type}   " + Color.END + "|"
-                    bottom += "       |"
-
-            print(top)
-            print(middle)
-            print(bottom)
