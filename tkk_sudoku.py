@@ -12,19 +12,7 @@ from template_sudokus import combo_list, combo_dict
 # TODO: finished numbers in green?
 
 
-def clues_to_str(clues_list) -> str:
-    """Returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing numbers with space"""
-    string = '\n'
-    for i in range(1, 10):
-        if i in clues_list:
-            string += ''.join(str(i))
-        else:
-            string += '  '
-        if i % 3 == 0:
-            string += '\n'
-        else:
-            string += '   '
-    return string
+
 
 
 class Gui:
@@ -98,7 +86,7 @@ class Gui:
                     label.config(fg='red', bg='white')
                     if len(tile_content) == 0:
                         label.config(bg='red')
-                    tile_content = clues_to_str(tile_content)
+                    tile_content = self.clues_to_str(tile_content)
                 if isinstance(tile_content, int):
                     label.config(fg='black', bg='white')
                 label["text"] = tile_content
@@ -127,3 +115,16 @@ class Gui:
         """Function used by the slider. Updates the time delay between solving steps"""
         self.time_delay = self.slider.get()
 
+    def clues_to_str(self, clues_list) -> str:
+        """Returns a string in form of '1 2 3\n4 5 6\n7 8 9', but replacing missing numbers with space"""
+        string = '\n'
+        for i in range(1, 10):
+            if i in clues_list:
+                string += ''.join(str(i))
+            else:
+                string += '  '
+            if i % 3 == 0:
+                string += '\n'
+            else:
+                string += '   '
+        return string
