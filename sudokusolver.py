@@ -39,7 +39,7 @@ class SudokuSolver:
             self.make_a_guess()
 
     def initiate_stack(self):
-        """ Initiates the stack with every already solved tile. """
+        """ Initiates the stack with every already pre-solved tile. """
         for i in range(9):
             for j in range(9):
                 if isinstance(self.sudoku[i][j], int):
@@ -132,10 +132,9 @@ class SudokuSolver:
                     if isinstance(self.sudoku[x][y], list) and num in self.sudoku[x][y]:
                         self.stack_append(row=x, column=y, number=num)
 
-    # TODO: use count box row/column functions
     def pointing(self):
         """ Solving strategy pointing pairs and pointing triples
-            If in box all clues of a number are in the same row or column those numbers can't be
+            If in a box all clues of a number are in the same row or column those numbers can't be
             in other tiles of this row or column """
         for box in self.subgrid:
             box_rows = set([row for row, column in self.subgrid[box]])  # all poss. r/c indices in curr. box
@@ -146,10 +145,7 @@ class SudokuSolver:
             digits = [(k, v) for k, v in counter.items() if (v == 2 or v == 3)]  # clue 2 or 3 times in box
             # rows
             for row in box_rows:
-                counter = collections.Counter()
-                for column in box_columns:
-                    if isinstance(self.sudoku[row][column], list):
-                        counter.update(collections.Counter(self.sudoku[row][column]))
+                counter = self.count_clues_in_box_row(box=box, row=row)
                 for k in digits:
                     if k in counter.items():
                         for i in other_columns:
@@ -157,10 +153,7 @@ class SudokuSolver:
                 counter.clear()
             # columns
             for column in box_columns:
-                counter = collections.Counter()
-                for row in box_rows:
-                    if isinstance(self.sudoku[row][column], list):
-                        counter.update(collections.Counter(self.sudoku[row][column]))
+                counter = self.count_clues_in_box_column(box=box, column=column)
                 for k in digits:
                     if k in counter.items():
                         for i in other_rows:
@@ -169,7 +162,7 @@ class SudokuSolver:
             counter.clear()
 
     def box_line(self):
-        """ Box-line reduction.
+        """ Box/Line reduction.
             If a number can only be in 2 or 3 tiles and those tiles are in the same box, you can remove
             all other clues of that number from that box """
         # row
@@ -178,29 +171,29 @@ class SudokuSolver:
             row_num = [(k, v) for k, v in row_count.items() if (v == 2 or v == 3)]
             for box in self.subgrid.keys():
                 box_row_count = self.count_clues_in_box_row(box=box, row=row)
-                box_23 = [(k, v) for k, v in box_row_count.items() if (v == 2 or v == 3)]
+                box_twos_or_threes = [(k, v) for k, v in box_row_count.items() if (v == 2 or v == 3)]
                 for kv in row_num:
-                    if kv in box_23:
+                    if kv in box_twos_or_threes:
                         indices_to_remove = [x for x in self.subgrid[box] if x[0] != row]
-                        for t in indices_to_remove:
-                            self.remove_clue(row=t[0], column=t[1], number=kv[0])
+                        for i in indices_to_remove:
+                            self.remove_clue(row=i[0], column=i[1], number=kv[0])
         # column
         for column in self.columns:
             column_count = self.count_clues_in_column(column=column)
             col_num = [(k, v) for k, v in column_count.items() if (v == 2 or v == 3)]
             for box in self.subgrid.keys():
                 box_col_count = self.count_clues_in_box_column(box=box, column=column)
-                box_23 = [(k, v) for k, v in box_col_count.items() if (v == 2 or v == 3)]
+                box_twos_or_threes = [(k, v) for k, v in box_col_count.items() if (v == 2 or v == 3)]
                 for kv in col_num:
-                    if kv in box_23:
+                    if kv in box_twos_or_threes:
                         indices_to_remove = [x for x in self.subgrid[box] if x[1] != column]
-                        for t in indices_to_remove:
-                            self.remove_clue(row=t[0], column=t[1], number=kv[0])
+                        for i in indices_to_remove:
+                            self.remove_clue(row=i[0], column=i[1], number=kv[0])
 
     def naked_pairs(self):
         """Naked Pairs
-        If in a row, column or box two clues of the same number are in exactly two tiles, all the other clues of
-        those numbers can be removed"""
+        If in a row, column or box two clues of the same number are in exactly the same two tiles,
+        all the other clues of those numbers can be removed"""
         # get every tile that contains a pair
         pairs = []
         for i in range(9):
@@ -255,17 +248,11 @@ class SudokuSolver:
                             if (row, col) not in tiles_to_ignore:
                                 self.remove_clue(row=row, column=col, number=num)
 
-    def naked_triples(self):
-        pass
-
-    def hidden_pairs(self):
-        pass
-
     ######################### Guessing function ##########################
     def make_a_guess(self):
         """ This function is used if the Sudoku Solver is stuck
-            It guesses a number of a tile where the list of clues is the shortest
-             nd the normal solving functions continue.
+            It guesses a number of a tile where the list of clues is the shortest,
+            then the normal solving functions continue.
             If it guessed wrong and the puzzle breaks the sudoku grid is reverted to its original
             state before the first guess.
             Then it guesses the other candidates"""
@@ -334,7 +321,7 @@ class SudokuSolver:
         """ Check if the sudoku grid is still valid.
         Fails if:
         Any list of candidates in the grid is emtpy,
-         r if any row, column or box contains more than 1 of the same number"""
+        or if any row, column or box contains more than 1 of the same number"""
         for row in self.rows:
             for col in self.columns:
                 if isinstance(self.sudoku[row][col], list):

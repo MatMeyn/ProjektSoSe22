@@ -6,14 +6,6 @@ from tkinter import ttk
 from sudokusolver import SudokuSolver
 from template_sudokus import combo_list, combo_dict
 
-# TODO: highlight top of stack?
-# TODO: Buttons: Import from String
-# TODO: solved label
-# TODO: finished numbers in green?
-
-
-
-
 
 class Gui:
     def __init__(self, root):
@@ -23,7 +15,7 @@ class Gui:
 
         self.sudoku = None
         self.stop = True
-        self.time_delay = 10
+        self.time_delay = 1
         self.labels = self.initial()
 
         self.combo_var = tk.StringVar()
@@ -44,17 +36,14 @@ class Gui:
 
         self.slider = tk.Scale(self.root,
                                from_=1,
-                               to=2000,
+                               to=1000,
                                label='Solve/ms',
                                orient='horizontal',
                                command=self.slider_change)
         self.slider.grid(column=10, row=2)
 
-    def import_sudoku(self):
-        """Function used by the import button. Loads the puzzle into the sudoku solver and activates the start button"""
-        self.sudoku = SudokuSolver(combo_dict[self.combo_var.get()])
-        self.update_labels()
-        self.start_button['state'] = 'active'
+        self.solved_label = tk.Label(self.root, text='Solved',
+                                     font='Arial 16 bold', fg='green', bg='grey')
 
     def initial(self) -> list:
         """ Creates the initial grid by constructing a label for every tile of the puzzle"""
@@ -62,7 +51,7 @@ class Gui:
         for i in range(9):
             row = []
             for j in range(9):
-                pady = 5 if ((i + 1) % 3 == 0) else 1
+                pady = 5 if ((i + 1) % 3 == 0) else 1  # Thicker pad between boxes
                 padx = 5 if ((j + 1) % 3 == 0) else 1
                 block = tk.Label(self.root,
                                  height=4,
@@ -82,21 +71,28 @@ class Gui:
             Stops the solver if the stop button is used or the puzzle is solved"""
         for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
             for tile_content, label in zip(row_matrix, row_labels):
-                if isinstance(tile_content, list):
+                if isinstance(tile_content, list):       # unsolved tile
                     label.config(fg='red', bg='white')
-                    if len(tile_content) == 0:
+                    if len(tile_content) == 0:           # failed tile
                         label.config(bg='red')
                     tile_content = self.clues_to_str(tile_content)
-                if isinstance(tile_content, int):
+                if isinstance(tile_content, int):        # solved tile
                     label.config(fg='black', bg='white')
                 label["text"] = tile_content
-        if self.sudoku.is_complete():
+        if self.sudoku.is_complete():                   # stop and display 'solved'
             if self.sudoku.is_solved():
                 self.stop_function()
-                # activate this sudoku is solved label
-        if not self.stop:
+                self.solved_label.grid(column=10, row=3)
+        if not self.stop:                               # loop until solved or otherwise stopped
             self.sudoku.solve_next()
             self.root.after(self.time_delay, self.update_labels)
+
+    def import_sudoku(self):
+        """Function used by the import button. Loads the puzzle into the sudoku solver and activates the start button"""
+        self.sudoku = SudokuSolver(combo_dict[self.combo_var.get()])
+        self.update_labels()
+        self.start_button['state'] = 'active'
+        self.solved_label.grid_remove()
 
     def stop_function(self):
         """Function used by the stop button. Stops the solving process."""
