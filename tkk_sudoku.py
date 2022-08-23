@@ -4,7 +4,7 @@
 import tkinter as tk
 from tkinter import ttk
 from sudokusolver import SudokuSolver
-from template_sudokus import combo_list, combo_dict
+from template_sudokus import template_names_list, templates_dict
 
 
 class Gui:
@@ -19,7 +19,7 @@ class Gui:
         self.labels = self.initial()
 
         self.combo_var = tk.StringVar()
-        self.combo_box = ttk.Combobox(self.root, values=combo_list, textvariable=self.combo_var)
+        self.combo_box = ttk.Combobox(self.root, values=template_names_list, textvariable=self.combo_var)
         self.combo_box.grid(column=10, row=0)
 
         self.import_button = tk.Button(self.root, text='Import', command=self.import_sudoku,
@@ -89,7 +89,7 @@ class Gui:
 
     def import_sudoku(self):
         """Function used by the import button. Loads the puzzle into the sudoku solver and activates the start button"""
-        self.sudoku = SudokuSolver(combo_dict[self.combo_var.get()])
+        self.sudoku = SudokuSolver(templates_dict[self.combo_var.get()])
         self.update_labels()
         self.start_button['state'] = 'active'
         self.solved_label.grid_remove()
