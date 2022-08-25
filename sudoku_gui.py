@@ -26,11 +26,11 @@ class Gui:
                                        height=1, width=10)
         self.import_button.grid(column=10, row=0, sticky='s')
 
-        self.start_button = tk.Button(self.root, text='Start', command=self.start_function, state='disabled',
+        self.start_button = tk.Button(self.root, text='Start', command=self.start_method, state='disabled',
                                       height=1, width=10)
         self.start_button.grid(column=10, row=1)
 
-        self.stop_button = tk.Button(self.root, text='Stop', command=self.stop_function, state='disabled',
+        self.stop_button = tk.Button(self.root, text='Stop', command=self.stop_method, state='disabled',
                                      height=1, width=10)
         self.stop_button.grid(column=10, row=1, sticky='s')
 
@@ -81,7 +81,7 @@ class Gui:
                 label["text"] = tile_content
         if self.sudoku.is_complete():                   # stop and display 'solved'
             if self.sudoku.is_solved():
-                self.stop_function()
+                self.stop_method()
                 self.solved_label.grid(column=10, row=3)
         if not self.stop:                               # loop until solved or otherwise stopped
             self.sudoku.solve_next()
@@ -94,13 +94,13 @@ class Gui:
         self.start_button['state'] = 'active'
         self.solved_label.grid_remove()
 
-    def stop_function(self):
+    def stop_method(self):
         """Function used by the stop button. Stops the solving process."""
         self.stop = True
         self.start_button['state'] = 'active'
         self.stop_button['state'] = 'disabled'
 
-    def start_function(self):
+    def start_method(self):
         """Function used by the start button. Starts the solving process."""
         self.stop = False
         self.stop_button['state'] = 'active'
