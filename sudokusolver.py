@@ -275,7 +275,10 @@ class SudokuSolver:
             If the sudoku solver is still stuck it loads the candidates of the next tile for guessing"""
         if len(self.possible_guess[0]["guess"]) == 0:
             self.possible_guess.clear()
-            self.possible_guess.append(self.shortest_list_generator.__next__())
+            try:
+                self.possible_guess.append(self.shortest_list_generator.__next__())
+            except StopIteration:
+                print("Couldn't solve this Sudoku")
         num_to_guess = self.possible_guess[0]["guess"].pop()
         row = self.possible_guess[0]["row"]
         column = self.possible_guess[0]["column"]
