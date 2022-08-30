@@ -434,5 +434,5 @@ class SudokuSolver:
         return self.stack
 
     def get_highlight(self) -> tuple:
-        """ Returns the Index of the Number that was set"""
+        """ Returns the Index of the last Number that was set"""
         return self.highlight_index

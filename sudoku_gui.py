@@ -77,7 +77,7 @@ class Gui:
                     if len(tile_content) == 0:           # failed tile
                         label.config(bg='red')
                     tile_content = self.clues_to_str(tile_content)
-                elif isinstance(tile_content, int):                                    # solved tile
+                elif isinstance(tile_content, int):      # solved tile
                     label.config(fg='black', bg='white')
                 if (i, j) == highlight:
                     label.config(bg='#ECFFDC')
