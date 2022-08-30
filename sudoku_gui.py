@@ -69,15 +69,18 @@ class Gui:
             Changes text color of a tile based on its solving status
             and changes the background of failed tiles to red.
             Stops the solver if the stop button is used or the puzzle is solved"""
-        for row_matrix, row_labels in zip(self.sudoku.get_main_sudoku(), self.labels):
-            for tile_content, label in zip(row_matrix, row_labels):
+        highlight = self.sudoku.get_highlight()
+        for i, (row_matrix, row_labels) in enumerate(zip(self.sudoku.get_main_sudoku(), self.labels)):
+            for j, (tile_content, label) in enumerate(zip(row_matrix, row_labels)):
                 if isinstance(tile_content, list):       # unsolved tile
                     label.config(fg='red', bg='white')
                     if len(tile_content) == 0:           # failed tile
                         label.config(bg='red')
                     tile_content = self.clues_to_str(tile_content)
-                if isinstance(tile_content, int):        # solved tile
+                elif isinstance(tile_content, int):                                    # solved tile
                     label.config(fg='black', bg='white')
+                if (i, j) == highlight:
+                    label.config(bg='#ECFFDC')
                 label["text"] = tile_content
         if self.sudoku.is_complete():                   # stop and display 'solved'
             if self.sudoku.is_solved():

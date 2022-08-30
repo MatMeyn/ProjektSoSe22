@@ -16,6 +16,7 @@ class SudokuSolver:
         self.sudoku = self.create_2d_from_string(unfinished_sudoku)
         self.sudoku_before_guess = None
         self.previous_sudoku = None
+        self.highlight_index = ()
         self.possible_guess = []
         self.shortest_list_generator = None
         self.initiate_stack()
@@ -62,6 +63,7 @@ class SudokuSolver:
         row = top["row"]
         column = top["column"]
         number = top["number"]
+        self.highlight_index = (row, column)
         self.collapse(row, column, number)
         if isinstance(self.sudoku[row][column], list):
             self.sudoku[row][column] = number
@@ -430,3 +432,7 @@ class SudokuSolver:
     def get_stack(self) -> list:
         """ Returns the current stack"""
         return self.stack
+
+    def get_highlight(self) -> tuple:
+        """ Returns the Index of the Number that was set"""
+        return self.highlight_index
